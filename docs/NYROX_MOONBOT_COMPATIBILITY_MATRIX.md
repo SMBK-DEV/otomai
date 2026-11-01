@@ -103,4 +103,4 @@ The game message router now records incoming protocol type names before handler 
 - `nyrox.getObservedDomainProtocolEvents()` → array of `{ type, count }` for messages no handler consumed (maximum 100 distinct names).
 - `nyrox.protocolObservationScope()` → `current-session-incoming-protocol-type-names-only`.
 
-These are bounded diagnostics (200 incoming / 100 unhandled distinct type names per client session). They deliberately store no message payloads, do not decode unknown protocol messages, and do not represent active/completed quests or dialogue choices. It provides evidence to identify the next real protocol handlers without fabricating API responses.
+These are bounded diagnostics (200 incoming / 100 unhandled distinct type names per client session). They deliberately store no message payloads, do not decode unknown protocol messages, and do not represent active/completed quests or dialogue choices. They provide evidence to identify the next real protocol handlers without fabricating API responses.
