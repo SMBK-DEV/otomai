@@ -535,7 +535,7 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
 
         StopLuaScript();
         _luaScriptHost = new LuaScriptHost(
-            [new BubbleBotRuntimeAdapter(this)],
+            [new BubbleBotRuntimeAdapter(this), new MoonBotUnityCompatibilityAdapter(this)],
             message => LogInfo("[LUA] {Message}", message));
 
         var result = _luaScriptHost.Load(File.ReadAllText(fullPath), Path.GetFileName(fullPath));
