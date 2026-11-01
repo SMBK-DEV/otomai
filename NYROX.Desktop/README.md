@@ -41,7 +41,7 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 - MoonSharp callbacks are synchronous and cannot be safely force-aborted. A callback must return promptly. If a callback is still running after a stop request, the scheduler keeps the account locked against replacement/disconnect until it returns. Desktop shutdown waits for in-flight callbacks to return rather than letting them outlive the host.
 - The scheduler is a bounded callback runner, not yet a full route/task workflow engine.
 
-## Local Control API
+## F10 Admin quick panel\n\n- Press F10 while NYROX Desktop is running to open a topmost Admin quick panel over the current desktop/game window.\n- The panel uses the same loopback Control API and DPAPI-backed owner token; it does not inject code into or modify the Dofus Unity process.\n- Shows live account state and scheduled callback count, with confirmed stop-scheduler, stop-Lua and disconnect actions.\n- F10 is a Windows global hotkey. Registration can fail if another application already owns F10; the main window reports that condition.\n- The quick panel is a companion desktop window, not an in-game-rendered overlay. Exclusive-fullscreen games or game-level hotkey handling may prevent it from appearing above the game.\n\n## Local Control API
 
 - Binds only to `127.0.0.1:48621`.
 - Every request requires `X-NYROX-Token`.
