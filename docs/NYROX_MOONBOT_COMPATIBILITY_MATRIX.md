@@ -97,9 +97,10 @@ A verified inventory of quest, NPC/dialogue and challenge message TypeUrls and g
 
 ## NYROX protocol discovery diagnostics
 
-The game message router records counts for all otherwise-unhandled protocol message type names (not only names matching English domain keywords, because generated protocol names may be abbreviated or opaque). Lua can inspect this through:
+The game message router now records incoming protocol type names before handler dispatch, including messages consumed by existing handlers. It separately retains the existing unhandled-only observer. Both are session-scoped, payload-free diagnostics. Lua can inspect them through:
 
-- `nyrox.getObservedDomainProtocolEvents()` → array of `{ type, count }`.
-- `nyrox.protocolObservationScope()` → `current-session-unhandled-protocol-type-names-only`.
+- `nyrox.getObservedProtocolEvents()` → array of `{ type, count }` for incoming messages (maximum 200 distinct names).
+- `nyrox.getObservedDomainProtocolEvents()` → array of `{ type, count }` for messages no handler consumed (maximum 100 distinct names).
+- `nyrox.protocolObservationScope()` → `current-session-incoming-protocol-type-names-only`.
 
-This is a bounded diagnostic (maximum 100 distinct type names per client session). It deliberately stores no message payloads, does not decode unknown protocol messages, and does not represent active/completed quests or dialogue choices. It provides evidence to identify the next real protocol handlers without fabricating API responses.
+These are bounded diagnostics (200 incoming / 100 unhandled distinct type names per client session). They deliberately store no message payloads, do not decode unknown protocol messages, and do not represent active/completed quests or dialogue choices. It provides evidence to identify the next real protocol handlers without fabricating API responses.
