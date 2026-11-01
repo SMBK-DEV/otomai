@@ -23,6 +23,7 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
         script.Globals.Set("map", DynValue.NewTable(BuildMap(script)));
         script.Globals.Set("character", DynValue.NewTable(BuildCharacter(script)));
         script.Globals.Set("fight", DynValue.NewTable(BuildFight(script)));
+        script.Globals.Set("inventory", DynValue.NewTable(BuildInventory(script)));
         script.Globals.Set("bot", DynValue.NewTable(BuildBot(script)));
         script.Globals.Set("global", DynValue.NewTable(BuildGlobal(script)));
         script.Globals.Set("console", DynValue.NewTable(BuildConsole(script)));
@@ -108,6 +109,55 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
         t.Set("level", Fn(() => _client.Info.Information is null
             ? DynValue.Nil : DynValue.NewNumber(_client.Info.Information.Level)));
         t.Set("cellId", Fn(() => DynValue.NewNumber(_client.Info.CellId)));
+        return t;
+    }
+
+    private Table BuildInventory(Script script)
+    {
+        var t = new Table(script);
+        t.Set("list", DynValue.NewCallback((_, _) =>
+        {
+            var result = new Table(script);
+            var index = 1;
+            foreach (var pair in _client.Inventory.Items.OrderBy(x => x.Key))
+            {
+                var wrapper = pair.Value;
+                var template = wrapper.Template;
+                var row = new Table(script);
+                row.Set("uid", DynValue.NewNumber(wrapper.Item.Item.Uid));
+                row.Set("gid", DynValue.NewNumber(wrapper.Item.Item.Gid));
+                row.Set("templateId", DynValue.NewNumber(template?.Id ?? wrapper.Item.Item.Gid));
+                row.Set("quantity", DynValue.NewNumber(wrapper.Item.Item.Quantity));
+                row.Set("position", DynValue.NewNumber(wrapper.Item.Position));
+                row.Set("name", template is null ? DynValue.Nil : DynValue.NewString(template.Name));
+                row.Set("type", template is null ? DynValue.Nil : DynValue.NewNumber(template.TypeId));
+                row.Set("weight", template is null ? DynValue.Nil : DynValue.NewNumber(template.RealWeight));
+                row.Set("level", template is null ? DynValue.Nil : DynValue.NewNumber(template.Level));
+                row.Set("equipped", DynValue.NewBoolean(wrapper.Item.Position != 63));
+                result.Set(index++, DynValue.NewTable(row));
+            }
+            return DynValue.NewTable(result);
+        }));
+        t.Set("countItem", DynValue.NewCallback((_, args) =>
+        {
+            if (!TryGetNumber(args, 0, out var gid)) return DynValue.NewNumber(0);
+            var quantity = _client.Inventory.Items.Values
+                .Where(x => x.Template?.Id == gid)
+                .Sum(x => (long)x.Item.Item.Quantity);
+            return DynValue.NewNumber(quantity);
+        }));
+        t.Set("equipItem", DynValue.NewCallback((_, args) =>
+        {
+            if (!TryGetNumber(args, 0, out var uid) || uid < int.MinValue || uid > int.MaxValue)
+                return DynValue.False;
+            return DynValue.NewBoolean(_client.EquipItem((int)uid));
+        }));
+        t.Set("useItemByGID", DynValue.NewCallback((_, args) =>
+        {
+            if (!TryGetNumber(args, 0, out var gid) || gid < int.MinValue || gid > int.MaxValue)
+                return DynValue.False;
+            return DynValue.NewBoolean(_client.UseItemByGid((int)gid));
+        }));
         return t;
     }
 
