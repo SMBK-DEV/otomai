@@ -43,7 +43,13 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 
 ## F10 Admin quick panel
 
-- Press F10 while NYROX Desktop is running to open a topmost Admin quick panel over the current desktop/game window.\n- The panel uses the same loopback Control API and DPAPI-backed owner token; it does not inject code into or modify the Dofus Unity process.\n- Shows live account state and scheduled callback count, with confirmed stop-scheduler, stop-Lua and disconnect actions.\n- F10 is a Windows global hotkey. Registration can fail if another application already owns F10; the main window reports that condition.\n- The quick panel is a companion desktop window, not an in-game-rendered overlay. Exclusive-fullscreen games or game-level hotkey handling may prevent it from appearing above the game.\n\n## Local Control API
+- Press F10 while NYROX Desktop is running to open a topmost Admin quick panel over the current desktop/game window.
+- The panel uses the same loopback Control API and DPAPI-backed owner token; it does not inject code into or modify the Dofus Unity process.
+- Shows live account state and scheduled callback count, with confirmed stop-scheduler, stop-Lua and disconnect actions.
+- F10 is a Windows global hotkey. Registration can fail if another application already owns F10; the main window reports that condition.
+- The quick panel is a companion desktop window, not an in-game-rendered overlay. Exclusive-fullscreen games or game-level hotkey handling may prevent it from appearing above the game.
+
+## Local Control API
 
 - Binds only to `127.0.0.1:48621`.
 - Every request requires `X-NYROX-Token`.
