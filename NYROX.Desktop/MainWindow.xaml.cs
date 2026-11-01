@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         _api = new ControlApiClient(token);
+        ProfileCombo.DisplayMemberPath = nameof(ProfileInfo.Name);
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _refreshTimer.Tick += async (_, _) => await RefreshDataAsync();
         Loaded += async (_, _) =>
@@ -41,11 +42,15 @@ public partial class MainWindow : Window
             var status = await _api.GetAsync<EngineStatus>("api/v1/status");
             var accounts = await _api.GetAsync<List<AccountStatus>>("api/v1/accounts") ?? [];
             var scripts = await _api.GetAsync<List<string>>("api/v1/scripts") ?? [];
+            var profiles = await _api.GetAsync<List<ProfileInfo>>("api/v1/profiles") ?? [];
+            var logs = await _api.GetAsync<List<ControlLogInfo>>("api/v1/logs?limit=60") ?? [];
             var selectedAccountId = SelectedAccount?.Id;
+            var selectedProfileName = (ProfileCombo.SelectedItem as ProfileInfo)?.Name;
 
             AccountsGrid.ItemsSource = accounts;
             if (selectedAccountId is not null)
                 AccountsGrid.SelectedItem = accounts.FirstOrDefault(x => x.Id == selectedAccountId);
+
             AccountCountText.Text = accounts.Count.ToString();
             ConnectedCountText.Text = accounts.Count(x => x.Connected).ToString();
             FightCountText.Text = accounts.Count(x => x.InFight).ToString();
@@ -53,12 +58,21 @@ public partial class MainWindow : Window
             ApiStatusText.Text = status?.State.ToUpperInvariant() ?? "UNAVAILABLE";
             ApiStatusText.Foreground = System.Windows.Media.Brushes.LightGreen;
 
-            var previous = ScriptCombo.SelectedItem as string;
+            var previousScript = ScriptCombo.SelectedItem as string;
             ScriptCombo.ItemsSource = scripts;
-            if (previous is not null && scripts.Contains(previous))
-                ScriptCombo.SelectedItem = previous;
+            if (previousScript is not null && scripts.Contains(previousScript))
+                ScriptCombo.SelectedItem = previousScript;
             else if (scripts.Count > 0)
                 ScriptCombo.SelectedIndex = 0;
+
+            ProfileCombo.ItemsSource = profiles;
+            if (selectedProfileName is not null)
+                ProfileCombo.SelectedItem = profiles.FirstOrDefault(x => x.Name == selectedProfileName);
+            if (ProfileCombo.SelectedItem is null && profiles.Count > 0)
+                ProfileCombo.SelectedIndex = 0;
+
+            LogsText.Text = string.Join(Environment.NewLine, logs.Select(x =>
+                $"[{x.Timestamp.ToLocalTime():HH:mm:ss}] [{x.Level}] [{x.Source}] {x.Message}"));
 
             if (SelectedAccount is not null)
                 SelectedAccountText.Text = $"{SelectedAccount.Character} • {SelectedAccount.Id}\n" +
@@ -68,7 +82,7 @@ public partial class MainWindow : Window
             else
                 SelectedAccountText.Text = "Select an account from the list.";
 
-            StatusText.Text = $"Updated {DateTime.Now:T}. {accounts.Count} live runtime account(s), {scripts.Count} script file(s).";
+            StatusText.Text = $"Updated {DateTime.Now:T}. {accounts.Count} live account(s), {scripts.Count} scripts, {profiles.Count} profiles, {status?.ScheduledCallbacks ?? 0} scheduled callback(s).";
         }
         catch (Exception exception)
         {
@@ -93,12 +107,10 @@ public partial class MainWindow : Window
             return;
         }
 
-        var confirm = MessageBox.Show(
+        if (MessageBox.Show(
             $"Request a connection for account '{username}' using the local BubbleBot account configuration?",
-            "Confirm account connection",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
-        if (confirm != MessageBoxResult.Yes) return;
+            "Confirm account connection", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
 
         try
         {
@@ -122,21 +134,18 @@ public partial class MainWindow : Window
             return;
         }
 
-        var confirm = MessageBox.Show(
+        if (MessageBox.Show(
             $"Load '{script}' for {account.Id}?\n\nLoading executes the Lua file's top-level code.",
-            "Confirm Lua script load",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
-        if (confirm != MessageBoxResult.Yes) return;
+            "Confirm Lua script load", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
 
         try
         {
             using var response = await _api.PostAsync(
-                $"api/v1/accounts/{Uri.EscapeDataString(account.Id)}/scripts/load",
-                new { path = script });
+                $"api/v1/accounts/{Uri.EscapeDataString(account.Id)}/scripts/load", new { path = script });
             var body = await response.Content.ReadAsStringAsync();
             StatusText.Text = response.IsSuccessStatusCode
-                ? $"Lua script loaded for {account.Id}. This confirms loading only, not completion of its in-game actions."
+                ? $"Lua script loaded for {account.Id}. This does not mean its in-game actions have completed."
                 : $"Script load failed: {body}";
         }
         catch (Exception exception) { StatusText.Text = exception.Message; }
@@ -146,7 +155,6 @@ public partial class MainWindow : Window
     {
         var account = SelectedAccount;
         if (account is null) { StatusText.Text = "Select a live account first."; return; }
-
         try
         {
             using var response = await _api.PostEmptyAsync(
@@ -177,6 +185,80 @@ public partial class MainWindow : Window
         catch (Exception exception) { StatusText.Text = exception.Message; }
     }
 
+    private async void SaveProfile_Click(object sender, RoutedEventArgs e)
+    {
+        var name = ProfileNameBox.Text.Trim();
+        var script = ScriptCombo.SelectedItem as string;
+        var callback = CallbackNameBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(script) ||
+            !int.TryParse(IntervalBox.Text, out var interval))
+        {
+            StatusText.Text = "Enter a profile name, select a script, and set an interval in milliseconds.";
+            return;
+        }
+
+        try
+        {
+            using var response = await _api.PostAsync("api/v1/profiles",
+                new { name, scriptPath = script, callbackName = callback, intervalMs = interval });
+            var body = await response.Content.ReadAsStringAsync();
+            StatusText.Text = response.IsSuccessStatusCode
+                ? $"Profile '{name}' saved locally."
+                : $"Profile save failed: {body}";
+            await RefreshDataAsync();
+        }
+        catch (Exception exception) { StatusText.Text = exception.Message; }
+    }
+
+    private async void StartSchedule_Click(object sender, RoutedEventArgs e)
+    {
+        var account = SelectedAccount;
+        var profile = ProfileCombo.SelectedItem as ProfileInfo;
+        if (account is null || profile is null)
+        {
+            StatusText.Text = "Select a live account and a saved profile.";
+            return;
+        }
+        if (!account.Connected || account.Stopped)
+        {
+            StatusText.Text = "The selected account must be connected and active.";
+            return;
+        }
+        if (MessageBox.Show(
+            $"Start callback '{profile.CallbackName}' every {profile.IntervalMs}ms for {account.Id}?\n\nThe callback will invoke real Lua/game actions. Only start a callback designed for repeated execution.",
+            "Confirm scheduled Lua execution", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            using var response = await _api.PostAsync(
+                $"api/v1/accounts/{Uri.EscapeDataString(account.Id)}/scheduler/start",
+                new { profile = profile.Name });
+            var body = await response.Content.ReadAsStringAsync();
+            StatusText.Text = response.IsSuccessStatusCode
+                ? $"Scheduler accepted for {account.Id}. First callback runs after {profile.IntervalMs}ms."
+                : $"Scheduler start failed: {body}";
+            await RefreshDataAsync();
+        }
+        catch (Exception exception) { StatusText.Text = exception.Message; }
+    }
+
+    private async void StopSchedule_Click(object sender, RoutedEventArgs e)
+    {
+        var account = SelectedAccount;
+        if (account is null) { StatusText.Text = "Select a live account first."; return; }
+        try
+        {
+            using var response = await _api.PostEmptyAsync(
+                $"api/v1/accounts/{Uri.EscapeDataString(account.Id)}/scheduler/stop");
+            StatusText.Text = response.IsSuccessStatusCode
+                ? $"Scheduler stop requested for {account.Id}."
+                : $"Scheduler stop failed: {await response.Content.ReadAsStringAsync()}";
+            await RefreshDataAsync();
+        }
+        catch (Exception exception) { StatusText.Text = exception.Message; }
+    }
+
     private void AccountsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (SelectedAccount is null) return;
@@ -187,10 +269,10 @@ public partial class MainWindow : Window
     }
 
     private void Accounts_Click(object sender, RoutedEventArgs e) => SetPage("Accounts", "Live sessions, connection status and account actions.");
-    private void Scripts_Click(object sender, RoutedEventArgs e) => SetPage("Scripts & Profiles", "Choose a Lua file and load or stop it for a selected runtime account.");
-    private void Tasks_Click(object sender, RoutedEventArgs e) => SetPage("Tasks & Routes", "Task scheduling is not exposed by the current runtime contract yet.");
-    private void Logs_Click(object sender, RoutedEventArgs e) => SetPage("Live Logs", "Structured per-account log streaming is the next runtime integration.");
-    private void GameData_Click(object sender, RoutedEventArgs e) => SetPage("Game Data", "Read-only local datacenter search is planned for this view.");
+    private void Scripts_Click(object sender, RoutedEventArgs e) => SetPage("Scripts & Profiles", "Load Lua scripts, save profiles and schedule explicit callbacks.");
+    private void Tasks_Click(object sender, RoutedEventArgs e) => SetPage("Tasks & Routes", "Task scheduling currently supports explicit Lua callbacks through saved profiles; route editor remains pending.");
+    private void Logs_Click(object sender, RoutedEventArgs e) => SetPage("Live Logs", "Recent local control, profile and scheduler events. Game-internal structured logs are not yet streamed.");
+    private void GameData_Click(object sender, RoutedEventArgs e) => SetPage("Game Data", "Read-only local datacenter search remains a separate integration task.");
     private void Settings_Click(object sender, RoutedEventArgs e) => SetPage("Settings", "The local API uses a per-Windows-user DPAPI-protected token and loopback binding.");
 
     private void SetPage(string title, string subtitle)
