@@ -103,7 +103,7 @@ The checked-in TypeUrl mapping contains no message whose mapped class name direc
 
 ## Implementation rules
 
-1. Keep the generic unhandled-message observer bounded and payload-free.
+1. Keep both incoming and unhandled-message observers bounded and payload-free.
 2. Add handlers only for confirmed event types and decoded fields.
 3. Separate static datacenter metadata from current account/session state.
 4. Confirm quest/objective completion only from the relevant server event or a fresh authoritative state snapshot.
