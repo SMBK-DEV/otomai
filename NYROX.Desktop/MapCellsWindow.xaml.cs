@@ -15,7 +15,7 @@ internal sealed record MapCellSnapshot(int Id, int X, int Y, bool Visible, bool 
 {
     private static int _currentCell = -1;
     internal static void SetCurrentCell(int cellId) => _currentCell = cellId;
-    public Brush Brush => Id == _currentCell ? new SolidColorBrush(ParseColor("#F4C542"))
+    public double CanvasX => (X - Y) * 18d;\n    public double CanvasY => (X + Y + 19) * 9d;\n    public Brush Brush => Id == _currentCell ? new SolidColorBrush(ParseColor("#F4C542"))
         : Occupied ? new SolidColorBrush(ParseColor("#7E22CE"))
         : Interactive ? new SolidColorBrush(ParseColor("#0369A1"))
         : MapChangeData != 0 ? new SolidColorBrush(ParseColor("#C2410C"))
