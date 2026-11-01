@@ -75,9 +75,9 @@
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,12">
                                 <TextBlock Text="Accounts" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="  •  live runtime state" Foreground="{StaticResource TextMuted}" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="  •  live runtime state • Ctrl/Shift-click for multiple accounts" Foreground="{StaticResource TextMuted}" FontSize="11" VerticalAlignment="Center"/>
                             </StackPanel>
-                            <DataGrid x:Name="AccountsGrid" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single"
+                            <DataGrid x:Name="AccountsGrid" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Extended"
                                       Background="#0D141C" Foreground="{StaticResource TextPrimary}" RowBackground="#111A24" AlternatingRowBackground="#14202B"
                                       BorderBrush="{StaticResource PanelBorder}" GridLinesVisibility="Horizontal" HeadersVisibility="Column"
                                       SelectionChanged="AccountsGrid_SelectionChanged">
@@ -123,6 +123,8 @@
                             <WrapPanel>
                                 <Button Content="Start schedule" Click="StartSchedule_Click"/>
                                 <Button Content="Stop schedule" Click="StopSchedule_Click"/>
+                                <Button Content="Start on selected accounts" Click="StartScheduleBulk_Click"/>
+                                <Button Content="Stop on selected accounts" Click="StopScheduleBulk_Click"/>
                             </WrapPanel>
                             <TextBlock Text="Scheduler invokes the chosen Lua callback repeatedly. Use only callbacks designed to be called on a timer; a running callback must return promptly." Foreground="{StaticResource TextMuted}" FontSize="10" TextWrapping="Wrap" Margin="0,5,0,0"/>
                             <Border Height="1" Background="{StaticResource PanelBorder}" Margin="0,10,0,10"/>
