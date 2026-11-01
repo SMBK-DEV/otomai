@@ -10,6 +10,15 @@ The CLI registers a read-only `bubble` namespace for a single BotGameClient:
 This is a BubbleBot snapshot API, not a MoonBot compatibility claim. No action methods are registered. It cannot move, start fights, talk to NPCs, exchange items, or modify quests. These need exact MoonBot Unity signatures and a real service mapping before being exposed.
 
 
+## Live fight snapshot functions (NYROX adapter)
+
+The `fight` namespace exposes read-only state from the active `BotGameClient.FightInfo`:
+- `fight.isInFight()`, `fight.currentTurn()`, `fight.isPreparation()`, `fight.isMyTurn()`, and `fight.isMyTurnReady()`.
+- `fight.getActors()` returns currently known actors with id, name, breed, team, cellId, health, maxHealth, dead, invisible and summoned fields.
+- `fight.getActor(id)` returns the same snapshot for one actor, or nil when that actor is not present.
+
+These are snapshots of actors already decoded by the current session. They do not issue packets or perform combat actions. Combat action APIs remain intentionally unavailable until each action is mapped to a verified protocol request and validated against the runtime.
+
 ## NYROX Unity compatibility adapter
 
 The separate `MoonBotUnityCompatibilityAdapter` exposes only reviewed mappings.
