@@ -51,9 +51,14 @@ internal sealed class ScriptScheduler : IAsyncDisposable
 
         // Validate callback existence without invoking it. Starting a schedule must not
         // execute a game action as a side effect of validation.
+        if (!string.Equals(client.LoadedLuaScriptPath, profile.ScriptPath.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase))
+        {
+            error = "The profile's script is not the currently loaded script for this account. Load the profile script first.";
+            return false;
+        }
         if (!client.HasLuaCallback(profile.CallbackName))
         {
-            error = $"Lua callback '{profile.CallbackName}' is not loaded. Load the profile's script first.";
+            error = $"Lua callback '{profile.CallbackName}' is not defined by the loaded profile script.";
             return false;
         }
 
