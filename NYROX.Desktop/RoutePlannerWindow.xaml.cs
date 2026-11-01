@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using System.Windows;
 using NYROX.Desktop.Control;
 using BubbleBot.Cli.Repository;
@@ -11,7 +12,25 @@ public partial class RoutePlannerWindow : Window
         InitializeComponent();
         Loaded += (_, _) => StatusText.Text = DesktopMapRouteCatalog.IsAvailable
             ? $"Loaded {DesktopMapRouteCatalog.MapCount:N0} map records. Preview does not execute movement."
-            : DesktopMapRouteCatalog.LoadError ?? "Local map catalog is unavailable.";
+            : DesktopMapRouteCatalog.LoadError ?? "Load BubbleBot Data/maps.json to begin." ;
+    }
+
+    private void LoadMaps_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Select BubbleBot Data/maps.json",
+            Filter = "Map data (maps.json)|maps.json|JSON files (*.json)|*.json|All files (*.*)|*.*",
+            CheckFileExists = true,
+            Multiselect = false
+        };
+        if (dialog.ShowDialog(this) != true) return;
+
+        StatusText.Text = "Loading map neighbour metadata…";
+        if (DesktopMapRouteCatalog.LoadFromFile(dialog.FileName, out var error))
+            StatusText.Text = $"Loaded {DesktopMapRouteCatalog.MapCount:N0} map records from the selected file. Preview only.";
+        else
+            StatusText.Text = $"Could not load map data: {error}";
     }
 
     private void Preview_Click(object sender, RoutedEventArgs e)
