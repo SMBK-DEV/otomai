@@ -12,7 +12,12 @@ Open **Operations Center** from the desktop navigation. It centralizes:
 - Proxy endpoint profiles and planned account assignment.
 - Subscription ledger for PaySafeCard, Ogrines and other methods.
 - Character creation plans.
+- Native NYROX Controller for local account groups, script assignment, group start/stop and per-account scheduler orchestration.
 - Runtime account snapshot and shortcuts to F10 Admin and Map Cells.
+
+### Native NYROX Controller
+
+Open **NYROX Controller** from Operations Center. It creates local groups from selected live runtime accounts, stores a script/callback/interval profile per group, loads the selected Lua script for each account, and starts or stops the existing per-account scheduler through the authenticated local Control API. Group configuration is stored in `%LocalAppData%\\NYROX\\controller-groups.json`. This is an orchestration layer over the existing runtime, not a second game connection. Script loading executes top-level Lua code; use reviewed scripts with bounded callbacks.
 
 ### Existing account creator
 
