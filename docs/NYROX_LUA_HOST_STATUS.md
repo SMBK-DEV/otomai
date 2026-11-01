@@ -18,8 +18,8 @@ Branch: nyrox/integration
 - No MoonBot Unity namespace is wired to BubbleBot services yet.
 - No `map`, `fight`, `npc`, `inventory`, `quest`, `character`, `group`, or `gameData` compatibility implementation is claimed complete.
 - No AnkaBot API adapter is implemented; AnkaBot PC remains a design reference only.
-- The scripting project is not yet instantiated by the CLI account lifecycle.
-- No unit test project or successful .NET build has been run in this environment.
+- The CLI references `BubbleBot.Scripting`; each `BotGameClient` owns its own host and disposes it on disconnect.
+- A GitHub Actions .NET 9 restore/build workflow is configured. The latest run is pending; earlier runs exposed and fixed callback-argument formatting compile errors. Build success must be confirmed from the latest run.
 
 ## Runtime safety / execution model
 
@@ -30,11 +30,11 @@ Branch: nyrox/integration
 
 ## Integration plan
 
-1. Add read-only adapters for current account, character, map, inventory and quest snapshots using exact MoonBot Unity signatures from the local reference.
+1. Complete read-only adapters for map NPCs/interactives, inventory snapshots, live quest state and current fight challenges.
 2. Add action adapters only after matching each method to a real BubbleBot service, event lifecycle, preconditions and failure semantics.
 3. Keep unsupported methods explicit; never fake `true`, empty arrays or IDs.
 4. Add offline contract tests and a process boundary for hard cancellation.
-5. Wire host lifecycle to each account's connect/disconnect/cancel events.
+5. Add a bounded controller/tick scheduler and process-isolated hard cancellation before untrusted or arbitrary scripts are supported.
 6. Do not invoke security bypass, CAPTCHA bypass, Shield-disabling, or account-creation utilities.
 
 ## Validation status
