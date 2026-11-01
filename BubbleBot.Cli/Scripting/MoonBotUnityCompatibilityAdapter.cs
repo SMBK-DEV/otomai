@@ -253,6 +253,60 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
             }
             return DynValue.NewTable(results);
         }));
+        t.Set("getAchievement", DynValue.NewCallback((_, args) =>
+        {
+            if (!TryGetNumber(args, 0, out var id) || id < int.MinValue || id > int.MaxValue)
+                return DynValue.Nil;
+
+            var achievement = AchievementDatacenterRepository.Get((int)id);
+            if (achievement is null) return DynValue.Nil;
+
+            var row = new Table(script);
+            row.Set("id", DynValue.NewNumber(achievement.Id));
+            row.Set("name", DynValue.NewString(DatacenterService.GetText(achievement.NameId)));
+            row.Set("description", DynValue.NewString(DatacenterService.GetText(achievement.DescriptionId)));
+            row.Set("categoryId", DynValue.NewNumber(achievement.CategoryId));
+            row.Set("points", DynValue.NewNumber(achievement.Points));
+            row.Set("level", DynValue.NewNumber(achievement.Level));
+            row.Set("order", DynValue.NewNumber(achievement.Order));
+            row.Set("accountLinked", DynValue.NewNumber(achievement.AccountLinked));
+
+            var objectives = new Table(script);
+            var objectiveIndex = 1;
+            foreach (var objective in AchievementDatacenterRepository.GetObjectives(achievement.Id))
+            {
+                var objectiveRow = new Table(script);
+                objectiveRow.Set("id", DynValue.NewNumber(objective.Id));
+                objectiveRow.Set("name", DynValue.NewString(DatacenterService.GetText(objective.NameId)));
+                objectiveRow.Set("order", DynValue.NewNumber(objective.Order));
+                objectiveRow.Set("criterion", DynValue.NewString(objective.Criterion));
+                objectives.Set(objectiveIndex++, DynValue.NewTable(objectiveRow));
+            }
+            row.Set("objectives", DynValue.NewTable(objectives));
+            return DynValue.NewTable(row);
+        }));
+        t.Set("searchAchievements", DynValue.NewCallback((_, args) =>
+        {
+            if (args.Count == 0 || args[0].Type != DataType.String)
+                return DynValue.NewTable(new Table(script));
+
+            var limit = 20;
+            if (TryGetNumber(args, 1, out var requestedLimit))
+                limit = (int)Math.Clamp(requestedLimit, 1, 50);
+
+            var results = new Table(script);
+            var index = 1;
+            foreach (var achievement in AchievementDatacenterRepository.Search(args[0].String, limit))
+            {
+                var row = new Table(script);
+                row.Set("id", DynValue.NewNumber(achievement.Id));
+                row.Set("name", DynValue.NewString(DatacenterService.GetText(achievement.NameId)));
+                row.Set("points", DynValue.NewNumber(achievement.Points));
+                row.Set("level", DynValue.NewNumber(achievement.Level));
+                results.Set(index++, DynValue.NewTable(row));
+            }
+            return DynValue.NewTable(results);
+        }));
         t.Set("getItem", DynValue.NewCallback((_, args) =>
         {
             if (!TryGetNumber(args, 0, out var id) || id < ushort.MinValue || id > ushort.MaxValue)
