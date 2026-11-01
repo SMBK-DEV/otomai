@@ -95,6 +95,10 @@ The IDs are held in `GameRuntimeState`, so they are isolated per game client. Th
 
 A verified inventory of quest, NPC/dialogue and challenge message TypeUrls and generated contract shapes is maintained in [`NYROX_PROTOCOL_EVENT_CATALOG.md`](NYROX_PROTOCOL_EVENT_CATALOG.md). Message names and TypeUrls are confirmed against `Data/game_mappings.json`; obfuscated field meanings are intentionally not guessed. No dedicated dungeon-specific message name was found in that mapping, which does not rule out generic map, interactive or NPC-based dungeon transitions.
 
+## Quest protocol audit script
+
+`BubbleBot.Cli/Scripts/nyrox-quest-protocol-audit.lua` is a read-only diagnostic for the incoming protocol observer. It filters observed message type names containing `Quest`, `Npc`, `Dialog` or `Challenge`, and prints per-session counts alongside the unhandled subset. It does not decode message payloads or expose inferred quest/dialogue state. Run it only when explicitly requested during a connected diagnostic session.
+
 ## NYROX protocol discovery diagnostics
 
 The game message router now records incoming protocol type names before handler dispatch, including messages consumed by existing handlers. It separately retains the existing unhandled-only observer. Both are session-scoped, payload-free diagnostics. Lua can inspect them through:
