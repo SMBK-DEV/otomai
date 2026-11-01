@@ -70,6 +70,15 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     private string? _loadedLuaScriptPath;
     private GameRuntimeState State => _context.State;
 
+    /// <summary>Sanitized message-template stream for local desktop diagnostics.</summary>
+    public event Action<string, string>? DesktopLog;
+
+    private void PublishDesktopLog(string level, string message)
+    {
+        try { DesktopLog?.Invoke(level, message); }
+        catch { /* Desktop observers must never break the game runtime logger. */ }
+    }
+
     public BotGameClient(
         BotClient       client,
         string          id,
@@ -874,18 +883,18 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
         _notificationService.LogChassesFinished(startedAt, giveUp, giveUpReason);
     }
 
-    public void LogWarning(string messageTemplate) => _notificationService.LogWarning(messageTemplate);
-    public void LogWarning<T>(string messageTemplate, T propertyValue) => _notificationService.LogWarning(messageTemplate, propertyValue);
-    public void LogWarning<T0, T1>(string messageTemplate, T0 propertyValue0, T1 propertyValue1) => _notificationService.LogWarning(messageTemplate, propertyValue0, propertyValue1);
-    public void LogWarning<T0, T1, T2>(string messageTemplate, T0 propertyValue0, T1 propertyValue1, T2 propertyValue2) => _notificationService.LogWarning(messageTemplate, propertyValue0, propertyValue1, propertyValue2);
-    public void LogInfo(string messageTemplate) => _notificationService.LogInfo(messageTemplate);
-    public void LogInfo<T>(string messageTemplate, T propertyValue) => _notificationService.LogInfo(messageTemplate, propertyValue);
-    public void LogInfo<T0, T1>(string messageTemplate, T0 propertyValue0, T1 propertyValue1) => _notificationService.LogInfo(messageTemplate, propertyValue0, propertyValue1);
-    public void LogInfo<T0, T1, T2>(string messageTemplate, T0 propertyValue0, T1 propertyValue1, T2 propertyValue2) => _notificationService.LogInfo(messageTemplate, propertyValue0, propertyValue1, propertyValue2);
-    public void LogError(Exception? exception, string messageTemplate) => _notificationService.LogError(exception, messageTemplate);
-    public void LogError(string messageTemplate) => _notificationService.LogError(messageTemplate);
-    public void LogError<T>(string messageTemplate, T propertyValue) => _notificationService.LogError(messageTemplate, propertyValue);
-    public void LogError<T0, T1>(string messageTemplate, T0 propertyValue0, T1 propertyValue1) => _notificationService.LogError(messageTemplate, propertyValue0, propertyValue1);
-    public void LogError<T0>(Exception? exception, string messageTemplate, T0 propertyValue0) => _notificationService.LogError(exception, messageTemplate, propertyValue0);
-    public void LogError<T0, T1, T2>(string messageTemplate, T0 propertyValue0, T1 propertyValue1, T2 propertyValue2) => _notificationService.LogError(messageTemplate, propertyValue0, propertyValue1, propertyValue2);
+    public void LogWarning(string messageTemplate) { PublishDesktopLog("Warning", messageTemplate); _notificationService.LogWarning(messageTemplate); }
+    public void LogWarning<T>(string messageTemplate, T propertyValue) { PublishDesktopLog("Warning", messageTemplate); _notificationService.LogWarning(messageTemplate, propertyValue); }
+    public void LogWarning<T0, T1>(string messageTemplate, T0 propertyValue0, T1 propertyValue1) { PublishDesktopLog("Warning", messageTemplate); _notificationService.LogWarning(messageTemplate, propertyValue0, propertyValue1); }
+    public void LogWarning<T0, T1, T2>(string messageTemplate, T0 propertyValue0, T1 propertyValue1, T2 propertyValue2) { PublishDesktopLog("Warning", messageTemplate); _notificationService.LogWarning(messageTemplate, propertyValue0, propertyValue1, propertyValue2); }
+    public void LogInfo(string messageTemplate) { PublishDesktopLog("Information", messageTemplate); _notificationService.LogInfo(messageTemplate); }
+    public void LogInfo<T>(string messageTemplate, T propertyValue) { PublishDesktopLog("Information", messageTemplate); _notificationService.LogInfo(messageTemplate, propertyValue); }
+    public void LogInfo<T0, T1>(string messageTemplate, T0 propertyValue0, T1 propertyValue1) { PublishDesktopLog("Information", messageTemplate); _notificationService.LogInfo(messageTemplate, propertyValue0, propertyValue1); }
+    public void LogInfo<T0, T1, T2>(string messageTemplate, T0 propertyValue0, T1 propertyValue1, T2 propertyValue2) { PublishDesktopLog("Information", messageTemplate); _notificationService.LogInfo(messageTemplate, propertyValue0, propertyValue1, propertyValue2); }
+    public void LogError(Exception? exception, string messageTemplate) { PublishDesktopLog("Error", messageTemplate); _notificationService.LogError(exception, messageTemplate); }
+    public void LogError(string messageTemplate) { PublishDesktopLog("Error", messageTemplate); _notificationService.LogError(messageTemplate); }
+    public void LogError<T>(string messageTemplate, T propertyValue) { PublishDesktopLog("Error", messageTemplate); _notificationService.LogError(messageTemplate, propertyValue); }
+    public void LogError<T0, T1>(string messageTemplate, T0 propertyValue0, T1 propertyValue1) { PublishDesktopLog("Error", messageTemplate); _notificationService.LogError(messageTemplate, propertyValue0, propertyValue1); }
+    public void LogError<T0>(Exception? exception, string messageTemplate, T0 propertyValue0) { PublishDesktopLog("Error", messageTemplate); _notificationService.LogError(exception, messageTemplate, propertyValue0); }
+    public void LogError<T0, T1, T2>(string messageTemplate, T0 propertyValue0, T1 propertyValue1, T2 propertyValue2) { PublishDesktopLog("Error", messageTemplate); _notificationService.LogError(messageTemplate, propertyValue0, propertyValue1, propertyValue2); }
 }
