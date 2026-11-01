@@ -29,7 +29,7 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 - Read-only Game Data Explorer for local item, monster and achievement datacenters (search capped at 50 results).
 - Extended account selection and confirmed bulk scheduler start/stop for selected accounts.
 - Separate live Task Monitor window showing active callbacks and graceful stop controls.
-- Read-only Route Planner: load the existing `BubbleBot.Cli/Data/maps.json` file on demand and preview shortest paths across cardinal map-neighbour links. The 98 MB map file is deliberately not bundled into the desktop ZIP.
+- Read-only Map Cells inspector opened from the F10 Admin panel: render the live 560-cell map in its isometric grid, inspect cell IDs/coordinates, walkability, line of sight, floor, occupancy, interactive element IDs, arrow and raw map-change metadata; show verified adjacent map IDs and world-graph transition directions.\n- Read-only Route Planner: load the existing `BubbleBot.Cli/Data/maps.json` file on demand and preview shortest paths across cardinal map-neighbour links. The 98 MB map file is deliberately not bundled into the desktop ZIP.
 - Three-second refresh of accounts, profiles, scheduler count and recent logs.
 
 ## Scheduler behaviour and safety
@@ -54,9 +54,9 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 - Binds only to `127.0.0.1:48621`.
 - Every request requires `X-NYROX-Token`.
 - The token is generated from 48 cryptographically random bytes and protected with Windows DPAPI for the current user under `%LOCALAPPDATA%\NYROX\control.token`.
-- API routes cover status, live accounts, script listing/loading/stopping, account connection/disconnection, profile create/list/delete, scheduler status/start/stop and recent logs.
+- API routes cover status, live accounts and read-only map-cell snapshots, script listing/loading/stopping, account connection/disconnection, profile create/list/delete, scheduler status/start/stop and recent logs.
 - No CORS policy or public listener is enabled.
-- The first desktop release has one local owner/admin token. Viewer/Operator role provisioning, audit history and remote control are not implemented. The F10 panel is a companion desktop window, not code injected into the game.
+- The map-cell endpoint returns current-session runtime data only; raw `MapChangeData` and cell arrows are exposed as metadata, not asserted to identify a specific door unless the game data confirms it.\n- The first desktop release has one local owner/admin token. Viewer/Operator role provisioning, audit history and remote control are not implemented. The F10 panel is a companion desktop window, not code injected into the game.
 
 ## Runtime requirements and limitations
 
