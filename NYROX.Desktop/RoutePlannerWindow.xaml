@@ -1,0 +1,46 @@
+<Window x:Class="NYROX.Desktop.RoutePlannerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="NYROX Route Planner" Height="620" Width="760"
+        WindowStartupLocation="CenterOwner" Background="#0B1118" Foreground="#E8EEF5">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="ROUTE PLANNER" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Read-only preview using the local map-neighbour catalog." Foreground="#9BAABD" Margin="0,4,0,14"/>
+        </StackPanel>
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock Text="Start map ID" Foreground="#9BAABD"/>
+                <TextBox x:Name="StartMapBox" Height="34" Padding="8" Background="#151F2B" Foreground="#E8EEF5" BorderBrush="#34465B"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="8,0">
+                <TextBlock Text="Destination map ID" Foreground="#9BAABD"/>
+                <TextBox x:Name="DestinationMapBox" Height="34" Padding="8" Background="#151F2B" Foreground="#E8EEF5" BorderBrush="#34465B"/>
+            </StackPanel>
+            <Button Grid.Column="2" Content="Preview route" Click="Preview_Click" Height="34" Padding="16,0" VerticalAlignment="Bottom" Background="#245D50" Foreground="White" BorderThickness="0"/>
+        </Grid>
+        <TextBlock x:Name="StatusText" Grid.Row="2" Text="Routes are previews only; no movement commands are sent." Foreground="#9BAABD" TextWrapping="Wrap" Margin="0,0,0,12"/>
+        <DataGrid x:Name="RouteGrid" Grid.Row="3" AutoGenerateColumns="False" IsReadOnly="True"
+                  Background="#111A24" Foreground="#E8EEF5" BorderBrush="#34465B"
+                  HeadersVisibility="Column" GridLinesVisibility="Horizontal">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="70"/>
+                <DataGridTextColumn Header="Map ID" Binding="{Binding MapId}" Width="*"/>
+                <DataGridTextColumn Header="Step" Binding="{Binding StepType}" Width="2*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBlock Grid.Row="4" Text="Limitations: cardinal neighbour edges only. Zaaps, dungeon entrances, doors, quest criteria and live character position are not included." Foreground="#D7A65A" TextWrapping="Wrap" Margin="0,12,0,0"/>
+    </Grid>
+</Window>
