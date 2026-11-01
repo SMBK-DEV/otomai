@@ -82,6 +82,15 @@ public sealed class PacketCaptureStore
         }
     }
 
+    public bool TryGet(long id, out PacketCaptureEntry? entry)
+    {
+        lock (_sync)
+        {
+            entry = _entries.FirstOrDefault(item => item.Id == id);
+            return entry is not null;
+        }
+    }
+
     public PacketCaptureSnapshot Snapshot()
     {
         lock (_sync)
