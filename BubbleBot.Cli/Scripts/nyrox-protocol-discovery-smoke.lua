@@ -1,5 +1,5 @@
 -- NYROX protocol discovery smoke check (read-only).
--- Reports only unmapped domain protocol type names observed this session.
+-- Reports unhandled protocol type names observed this session (bounded, names only).
 -- No quest state is inferred; no movement, dialogue, combat or item action occurs.
 
 function audit()
@@ -16,7 +16,7 @@ function audit()
 
     if type(events) == "table" then
         for _, event in ipairs(events) do
-            console.print("UNMAPPED DOMAIN EVENT type=", event.type,
+            console.print("UNHANDLED PROTOCOL EVENT type=", event.type,
                 " count=", event.count)
         end
     end
