@@ -1,0 +1,22 @@
+name: NYROX Desktop build
+
+on:
+  push:
+    branches:
+      - nyrox/integration
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  windows-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore solution
+        run: dotnet restore BubbleBot.sln
+      - name: Build Windows desktop and runtime
+        run: dotnet build BubbleBot.sln --configuration Release --no-restore
