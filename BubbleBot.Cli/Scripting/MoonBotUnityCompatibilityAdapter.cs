@@ -37,7 +37,7 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
     private Table BuildNyrox(Script script)
     {
         var t = new Table(script);
-        // Diagnostic discovery only: event names/counts, never payloads or inferred state.
+        // Diagnostic discovery only: unhandled event type names/counts, never payloads or inferred state.
         t.Set("getObservedDomainProtocolEvents", DynValue.NewCallback((_, _) =>
         {
             var result = new Table(script);
@@ -51,7 +51,7 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
             }
             return DynValue.NewTable(result);
         }));
-        t.Set("protocolObservationScope", Fn(() => DynValue.NewString("current-session-unmapped-domain-event-types-only")));
+        t.Set("protocolObservationScope", Fn(() => DynValue.NewString("current-session-unhandled-protocol-type-names-only")));
         return t;
     }
 
