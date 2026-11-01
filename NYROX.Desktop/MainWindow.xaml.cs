@@ -44,6 +44,7 @@ public partial class MainWindow : Window
                 UnregisterHotKey(_hotkeySource.Handle, AdminHotkeyId);
                 _hotkeySource = null;
             }
+            _adminWindow?.Close();
             _api.Dispose();
         };
     }
@@ -342,7 +343,7 @@ public partial class MainWindow : Window
         }
 
         if (MessageBox.Show(
-            $"Start '{profile.CallbackName}' every {profile.IntervalMs}ms on {eligible.Count} selected account(s)?\\n\\nThis invokes real Lua/game actions independently on each account.",
+            $"Start '{profile.CallbackName}' every {profile.IntervalMs}ms on {eligible.Count} selected account(s)?\n\nThis invokes real Lua/game actions independently on each account.",
             "Confirm multi-account Lua execution", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
             return;
 
