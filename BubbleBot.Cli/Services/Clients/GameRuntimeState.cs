@@ -84,6 +84,6 @@ internal sealed class GameRuntimeState
     public bool IsWaitingPartyMembers { get; set; }
     // Achievement IDs confirmed by server events during this client session.
     public HashSet<int> ObservedCompletedAchievementIds { get; } = [];
-    // Counts only unmapped protocol type names relevant to NYROX domain discovery.
+    // Counts unhandled protocol type names only; no payloads, max 100 distinct names per session.
     public Dictionary<string, int> ObservedUnmappedDomainEvents { get; } = new(StringComparer.Ordinal);
 }
