@@ -207,6 +207,22 @@ internal sealed class ControlApiHost : IAsyncDisposable
             });
         });
 
+        app.MapGet("/api/v1/accounts/{id}/quest-npc-events", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            var snapshot = client.QuestNpcEvents.Snapshot();
+            return Results.Ok(new
+            {
+                accountId = id,
+                scope = "current-session-verified-quest-npc-events",
+                interpretation = "Schema field labels may be obfuscated; strings and byte payloads are omitted. Numeric values are not assigned guessed semantic meanings.",
+                events = snapshot.Events,
+                counts = snapshot.Counts
+            });
+        });
+
         app.MapGet("/api/v1/accounts/{id}/packet-capture/{packetId:long}/decoded", (string id, long packetId) =>
         {
             if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
