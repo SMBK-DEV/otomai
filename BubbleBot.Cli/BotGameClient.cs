@@ -98,6 +98,7 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
         : base(address, port, proxy)
     {
         BotId = id;
+        GameMessageRouter.ResetObservedRoutes(BotId);
         Hwid = hwid;
         Account = account;
         ServerId = serverId;
