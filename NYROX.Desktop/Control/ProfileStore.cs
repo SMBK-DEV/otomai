@@ -41,16 +41,35 @@ internal sealed class ProfileStore
     public bool Save(ScriptProfile profile)
     {
         if (!IsValidName(profile.Name) ||
-            string.IsNullOrWhiteSpace(profile.ScriptPath) || profile.ScriptPath.Length > 240 ||
+            !IsSafeScriptPath(profile.ScriptPath) ||
+            string.IsNullOrWhiteSpace(profile.CallbackName) ||
             !Regex.IsMatch(profile.CallbackName, @"^[A-Za-z_][A-Za-z0-9_]{0,63}$") ||
             profile.IntervalMs is < 1000 or > 60000)
             return false;
 
-        var path = Path.Combine(_directory, profile.Name + ".json");
-        var temp = path + ".tmp";
-        File.WriteAllText(temp, JsonSerializer.Serialize(profile, JsonOptions));
-        File.Move(temp, path, true);
-        return true;
+        try
+        {
+            var path = Path.Combine(_directory, profile.Name + ".json");
+            var temp = path + ".tmp";
+            File.WriteAllText(temp, JsonSerializer.Serialize(profile, JsonOptions));
+            File.Move(temp, path, true);
+            return true;
+        }
+        catch (IOException) { return false; }
+        catch (UnauthorizedAccessException) { return false; }
+    }
+
+    private static bool IsSafeScriptPath(string? relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath) || relativePath.Length > 240 ||
+            Path.IsPathRooted(relativePath))
+            return false;
+
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "Scripts"));
+        var full = Path.GetFullPath(Path.Combine(root, relativePath));
+        var prefix = root.EndsWith(Path.DirectorySeparatorChar) ? root : root + Path.DirectorySeparatorChar;
+        return full.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) &&
+            full.EndsWith(".lua", StringComparison.OrdinalIgnoreCase) && File.Exists(full);
     }
 
     public static bool IsValidName(string? name) =>
