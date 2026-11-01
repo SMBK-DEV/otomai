@@ -395,6 +395,12 @@ public partial class MainWindow : Window
         var window = new TasksWindow(_token) { Owner = this };
         window.ShowDialog();
     }
+    private void Routes_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new RoutePlannerWindow { Owner = this };
+        window.ShowDialog();
+    }
+
     private void Logs_Click(object sender, RoutedEventArgs e) => SetPage("Live Logs", "Recent local control, profile and scheduler events. Game-internal structured logs are not yet streamed.");
     private void GameData_Click(object sender, RoutedEventArgs e)
     {
