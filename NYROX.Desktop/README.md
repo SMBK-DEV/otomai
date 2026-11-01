@@ -84,3 +84,7 @@ Do not commit account files, proxies, tokens, or game credentials. The local API
 ### Quest & NPC event monitor
 
 The Protocol Sniffer includes a `Quest & NPC` tab showing the latest 100 verified quest/NPC protocol events and per-type counts for the current account session. The authenticated local endpoint is `GET /api/v1/accounts/{id}/quest-npc-events`. It stores bounded numeric/enum schema diagnostics in memory only; free-form strings and byte payloads are omitted. Some generated schema labels are obfuscated, so the UI deliberately does not claim semantic meanings for them. This observer does not advance quests, answer NPC dialogs, or automate dungeons.
+
+### Dofus-like game interface
+
+The F10 Admin panel can open a per-account Dofus-like window with three tabs: Dialogue, Inventaire, and Échange. It uses the authenticated local endpoint `GET /api/v1/accounts/{id}/game-interface` and reads inventory/Kamas from the existing runtime plus observed NPC/exchange protocol events. The inventory is rendered as item tiles with an equipment list and item details. The dialogue panel displays received NPC text and reply IDs. Choice selection is visual only; no reply request is sent until the two reply fields are semantically verified. The exchange panel shows current inventory, observed offer items, partner ID and Ready state; it does not yet move items or confirm exchanges, and does not claim which participant owns every observed item. All UI telemetry is read-only.
