@@ -20,6 +20,8 @@ internal sealed class ScriptScheduler : IAsyncDisposable
         _profiles = profiles;
     }
 
+    public bool IsRunning(string accountId) => _running.ContainsKey(accountId);
+
     public IReadOnlyList<ScheduleStatus> Status() => _running.Values
         .Select(x => new ScheduleStatus(x.AccountId, x.ProfileName, x.CallbackName, x.IntervalMs, x.StartedAt))
         .OrderBy(x => x.AccountId, StringComparer.OrdinalIgnoreCase).ToArray();
@@ -79,15 +81,18 @@ internal sealed class ScriptScheduler : IAsyncDisposable
 
     public async Task<bool> StopAsync(string accountId)
     {
-        if (!_running.TryRemove(accountId, out var running)) return false;
+        if (!_running.TryGetValue(accountId, out var running)) return false;
         running.Cancellation.Cancel();
         if (running.Worker is not null)
         {
             try { await running.Worker.WaitAsync(TimeSpan.FromSeconds(5)); }
-            catch (TimeoutException) { _logs.Write("Warning", accountId, "Scheduler stop is waiting for a synchronous Lua callback to return."); }
+            catch (TimeoutException)
+            {
+                _logs.Write("Warning", accountId, "Stop requested; waiting for the synchronous Lua callback to return. A replacement task is blocked until then.");
+                return false;
+            }
             catch (OperationCanceledException) { }
         }
-        running.Cancellation.Dispose();
         _logs.Write("Information", accountId, "Scheduler stopped.");
         return true;
     }
