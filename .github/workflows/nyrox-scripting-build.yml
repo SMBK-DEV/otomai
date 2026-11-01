@@ -1,0 +1,24 @@
+name: NYROX scripting build
+
+on:
+  push:
+    branches:
+      - nyrox/integration
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore
+        run: dotnet restore BubbleBot.sln
+      - name: Build
+        run: dotnet build BubbleBot.sln --configuration Release --no-restore
