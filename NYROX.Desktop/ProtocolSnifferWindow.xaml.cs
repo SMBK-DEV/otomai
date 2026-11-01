@@ -8,6 +8,8 @@ using NYROX.Desktop.Control;
 namespace NYROX.Desktop;
 
 internal sealed record ProtocolEventRow(string Type, int Count);
+internal sealed record ProtocolRouteRow(string Type, string Handler, int Count);
+internal sealed record ProtocolRoutingSnapshot(string AccountId, string Scope, List<ProtocolRouteRow> Routes);
 internal sealed record ProtocolObserverSnapshot(
     string AccountId, string Scope, bool PayloadCapture,
     List<ProtocolEventRow> Incoming, List<ProtocolEventRow> Unhandled);
@@ -53,12 +55,17 @@ public partial class ProtocolSnifferWindow : Window
                 $"api/v1/accounts/{Uri.EscapeDataString(_accountId)}/protocol-observer");
             var capture = await _api.GetAsync<PacketCaptureSnapshot>(
                 $"api/v1/accounts/{Uri.EscapeDataString(_accountId)}/packet-capture");
+            var routing = await _api.GetAsync<ProtocolRoutingSnapshot>(
+                $"api/v1/accounts/{Uri.EscapeDataString(_accountId)}/protocol-routing");
 
             if (observer is not null)
             {
                 IncomingGrid.ItemsSource = observer.Incoming;
                 UnhandledGrid.ItemsSource = observer.Unhandled;
             }
+
+            if (routing is not null)
+                RoutingGrid.ItemsSource = routing.Routes;
 
             if (capture is not null)
             {
