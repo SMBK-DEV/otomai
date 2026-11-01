@@ -449,6 +449,11 @@ public partial class MainWindow : Window
     }
 
     private void Accounts_Click(object sender, RoutedEventArgs e) => SetPage("Accounts", "Live sessions, connection status and account actions.");
+    private void Operations_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new OperationsCenterWindow(_token) { Owner = this };
+        window.ShowDialog();
+    }
     private void Scripts_Click(object sender, RoutedEventArgs e) => SetPage("Scripts & Profiles", "Load Lua scripts, save profiles and schedule explicit callbacks.");
     private void Tasks_Click(object sender, RoutedEventArgs e)
     {
