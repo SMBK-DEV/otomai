@@ -335,7 +335,7 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
             {
                 var row = new Table(script);
                 row.Set("id", DynValue.NewNumber(achievement.Id));
-                row.Set("name", DynValue.NewString(DatacenterService.GetText(achievement.NameId)));
+                row.Set("name", DynValue.NewString(DatacenterService.GetText(unchecked((uint)achievement.NameId))));
                 row.Set("points", DynValue.NewNumber(achievement.Points));
                 row.Set("level", DynValue.NewNumber(achievement.Level));
                 results.Set(index++, DynValue.NewTable(row));
