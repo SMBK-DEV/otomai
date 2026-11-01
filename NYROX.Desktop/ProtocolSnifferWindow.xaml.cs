@@ -18,6 +18,10 @@ internal sealed record PacketCaptureRow(
     int OriginalBytes, bool Truncated, string PayloadHex, int StoredBytes);
 internal sealed record PacketCaptureSnapshot(
     bool Enabled, int Count, int StoredPayloadBytes, List<PacketCaptureRow> Entries);
+internal sealed record ProtocolDecodedFieldRow(int Number, string Path, string Kind, string Value);
+internal sealed record ProtocolPayloadDecodeSnapshot(
+    long Id, string Type, string Direction, bool Truncated, bool Supported, string Message,
+    List<ProtocolDecodedFieldRow> Fields);
 
 public partial class ProtocolSnifferWindow : Window
 {
@@ -136,6 +140,55 @@ public partial class ProtocolSnifferWindow : Window
             .AppendLine("RAW PROTOBUF ANY.VALUE — HEX")
             .AppendLine(FormatHex(packet.PayloadHex));
         PayloadDetailText.Text = header.ToString();
+    }
+
+    private async void DecodeSelected_Click(object sender, RoutedEventArgs e)
+    {
+        if (PacketsGrid.SelectedItem is not PacketCaptureRow packet)
+        {
+            StatusText.Text = "Select a captured packet first.";
+            return;
+        }
+
+        try
+        {
+            var decoded = await _api.GetAsync<ProtocolPayloadDecodeSnapshot>(
+                $"api/v1/accounts/{Uri.EscapeDataString(_accountId)}/packet-capture/{packet.Id}/decoded");
+            if (decoded is null)
+            {
+                StatusText.Text = "Generated schema decoder returned no result.";
+                return;
+            }
+
+            var output = new StringBuilder()
+                .AppendLine("GENERATED PROTOBUF SCHEMA DECODE")
+                .AppendLine(decoded.Message)
+                .AppendLine($"Supported: {decoded.Supported}")
+                .AppendLine($"Capture truncated: {decoded.Truncated}")
+                .AppendLine();
+
+            if (decoded.Fields.Count == 0)
+                output.AppendLine("(no named fields were available)");
+            else
+                foreach (var field in decoded.Fields)
+                    output.AppendLine($"#{field.Number}  {field.Path}  [{field.Kind}] = {field.Value}");
+
+            output.AppendLine()
+                .AppendLine("GENERIC PROTOBUF FIELD WALK (field numbers only)")
+                .Append(DecodeProtobufFields(Convert.FromHexString(packet.PayloadHex)))
+                .AppendLine()
+                .AppendLine("RAW PROTOBUF ANY.VALUE — HEX")
+                .AppendLine(FormatHex(packet.PayloadHex));
+
+            PayloadDetailText.Text = output.ToString();
+            StatusText.Text = decoded.Supported
+                ? $"Decoded {decoded.Fields.Count} named fields using generated protocol metadata."
+                : decoded.Message;
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Schema decode failed: {ex.Message}";
+        }
     }
 
     private static string DecodeProtobufFields(byte[] data)
