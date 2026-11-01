@@ -109,6 +109,7 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
         t.Set("level", Fn(() => _client.Info.Information is null
             ? DynValue.Nil : DynValue.NewNumber(_client.Info.Information.Level)));
         t.Set("cellId", Fn(() => DynValue.NewNumber(_client.Info.CellId)));
+        t.Set("kamas", Fn(() => DynValue.NewNumber(_client.Inventory.Kamas)));
         return t;
     }
 
