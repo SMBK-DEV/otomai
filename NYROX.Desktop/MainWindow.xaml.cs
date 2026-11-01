@@ -9,12 +9,14 @@ namespace NYROX.Desktop;
 public partial class MainWindow : Window
 {
     private readonly ControlApiClient _api;
+    private readonly string _token;
     private readonly DispatcherTimer _refreshTimer;
     private bool _refreshing;
 
     public MainWindow(string token)
     {
         InitializeComponent();
+        _token = token;
         _api = new ControlApiClient(token);
         ProfileCombo.DisplayMemberPath = nameof(ProfileInfo.Name);
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
@@ -281,7 +283,11 @@ public partial class MainWindow : Window
     private void Scripts_Click(object sender, RoutedEventArgs e) => SetPage("Scripts & Profiles", "Load Lua scripts, save profiles and schedule explicit callbacks.");
     private void Tasks_Click(object sender, RoutedEventArgs e) => SetPage("Tasks & Routes", "Task scheduling currently supports explicit Lua callbacks through saved profiles; route editor remains pending.");
     private void Logs_Click(object sender, RoutedEventArgs e) => SetPage("Live Logs", "Recent local control, profile and scheduler events. Game-internal structured logs are not yet streamed.");
-    private void GameData_Click(object sender, RoutedEventArgs e) => SetPage("Game Data", "Read-only local datacenter search remains a separate integration task.");
+    private void GameData_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new GameDataWindow(_token) { Owner = this };
+        window.ShowDialog();
+    }
     private void Settings_Click(object sender, RoutedEventArgs e) => SetPage("Settings", "The local API uses a per-Windows-user DPAPI-protected token and loopback binding.");
 
     private void SetPage(string title, string subtitle)
