@@ -56,9 +56,12 @@ This intentionally prefers a missing local match over a fabricated or ambiguous 
    shorter than two characters instead of slicing it with `[..2]` and throwing
    `ArgumentOutOfRangeException`. The whitelist is static and reused. Existing compound
    criterion and whitelist decisions are otherwise preserved.
-3. `GameNavigationService` still selects `FirstOrDefault()` from an edge's transitions.
-   Transition ordering and suitability need fixtures based on actual world-graph data before
-   changing that behavior.
+3. `GameNavigationService` now chooses the first transition kind for which an executor
+   exists (Scroll, ScrollAction, MapAction, Interactive), rather than blindly selecting the
+   first list entry. If an edge contains only currently unsupported kinds (MapEvent,
+   MapObstacle, NpcAction, or unknown values), it logs the types and stops instead of silently
+   doing nothing. This does not prove that the chosen transition's criteria or target cell are
+   correct; that still needs real world-graph fixtures.
 4. `GameMapLifecycleService.OnNewMap()` now advances `AutoPathIndex` only when the
    authoritative map event matches the current edge's destination map or one of that edge's
    declared transition map IDs. A repeated map event for the edge's source map leaves the
