@@ -193,6 +193,41 @@ internal sealed class ControlApiHost : IAsyncDisposable
             });
         });
 
+        app.MapGet("/api/v1/accounts/{id}/packet-capture", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            return Results.Ok(client.PacketCapture.Snapshot());
+        });
+
+        app.MapPost("/api/v1/accounts/{id}/packet-capture/start", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            client.PacketCapture.Start();
+            return Results.Ok(new { enabled = true, note = "Bounded in-memory payload capture started. Sensitive message categories are excluded." });
+        });
+
+        app.MapPost("/api/v1/accounts/{id}/packet-capture/stop", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            client.PacketCapture.Stop();
+            return Results.Ok(new { enabled = false });
+        });
+
+        app.MapPost("/api/v1/accounts/{id}/packet-capture/clear", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            client.PacketCapture.Clear();
+            return Results.Ok(new { cleared = true });
+        });
+
         app.MapGet("/api/v1/game-data/{category}", (string category, string? q, int? limit) =>
         {
             if (category is not ("items" or "monsters" or "achievements"))
