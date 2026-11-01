@@ -86,4 +86,6 @@ internal sealed class GameRuntimeState
     public HashSet<int> ObservedCompletedAchievementIds { get; } = [];
     // Counts unhandled protocol type names only; no payloads, max 100 distinct names per session.
     public Dictionary<string, int> ObservedUnmappedDomainEvents { get; } = new(StringComparer.Ordinal);
+    // Counts incoming protocol type names before handler dispatch; payload-free, max 200 distinct names/session.
+    public Dictionary<string, int> ObservedProtocolEvents { get; } = new(StringComparer.Ordinal);
 }
