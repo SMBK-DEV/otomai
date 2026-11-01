@@ -114,6 +114,8 @@ internal sealed class ControlApiHost : IAsyncDisposable
                 return Results.NotFound(new { error = "Account is not present in the live runtime." });
 
             await _scheduler.StopAsync(id);
+            if (_scheduler.IsRunning(id))
+                return Results.Conflict(new { error = "A Lua callback is still running. Wait for it to return before replacing the script." });
             var result = client.LoadLuaScriptFromFile(request.Path);
             _logs.Write(result.Succeeded ? "Information" : "Error", id,
                 result.Succeeded ? $"Lua script loaded: {request.Path}" : $"Lua script load failed: {result.Error}");
@@ -125,6 +127,8 @@ internal sealed class ControlApiHost : IAsyncDisposable
         app.MapPost("/api/v1/accounts/{id}/scripts/stop", async (string id) =>
         {
             await _scheduler.StopAsync(id);
+            if (_scheduler.IsRunning(id))
+                return Results.Conflict(new { error = "A Lua callback is still running. The interpreter was not disposed." });
             if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
                 return Results.NotFound(new { error = "Account is not present in the live runtime." });
 
@@ -156,6 +160,8 @@ internal sealed class ControlApiHost : IAsyncDisposable
         app.MapPost("/api/v1/accounts/{id}/disconnect", async (string id) =>
         {
             await _scheduler.StopAsync(id);
+            if (_scheduler.IsRunning(id))
+                return Results.Conflict(new { error = "A Lua callback is still running. Disconnect was not sent." });
             if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
                 return Results.NotFound(new { error = "Account is not present in the live runtime." });
 
