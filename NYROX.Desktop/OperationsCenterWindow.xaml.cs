@@ -103,6 +103,26 @@ public partial class OperationsCenterWindow : Window
     }
     private void OpenRegistration_Click(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://account.ankama.com/") { UseShellExecute = true });
 
+    private void CompleteRegistration_Click(object sender, RoutedEventArgs e)
+    {
+        if (RegistrationGrid.SelectedItem is not RegistrationRequest request)
+        {
+            StatusText.Text = "Select a registration task first.";
+            return;
+        }
+
+        if (_accounts.Any(x => string.Equals(x.Login, request.Email, StringComparison.OrdinalIgnoreCase)))
+        {
+            StatusText.Text = "This account is already in the shared account registry.";
+            return;
+        }
+
+        _accounts.Add(new(request.Email, request.Server, request.Email, "Registered — credentials not imported"));
+        _registrations.Remove(request);
+        SaveWorkspace();
+        StatusText.Text = "Registered account added to the shared Accounts registry. Add credentials only through the secure account flow.";
+    }
+
     private void AddProxy_Click(object sender, RoutedEventArgs e)
     {
         var name = ProxyNameBox.Text.Trim(); var host = ProxyHostBox.Text.Trim();
