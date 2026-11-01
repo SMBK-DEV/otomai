@@ -22,6 +22,12 @@ internal sealed record ProtocolDecodedFieldRow(int Number, string Path, string K
 internal sealed record ProtocolPayloadDecodeSnapshot(
     long Id, string Type, string Direction, bool Truncated, bool Supported, string Message,
     List<ProtocolDecodedFieldRow> Fields);
+internal sealed record QuestNpcFieldDto(int Number, string Path, string Kind, string Value);
+internal sealed record QuestNpcEventDto(DateTimeOffset Timestamp, string Type, List<QuestNpcFieldDto> Fields);
+internal sealed record QuestNpcCountDto(string Type, int Count);
+internal sealed record QuestNpcEventsSnapshot(string AccountId, string Scope, string Interpretation,
+    List<QuestNpcEventDto> Events, List<QuestNpcCountDto> Counts);
+internal sealed record QuestNpcEventRow(DateTimeOffset Timestamp, string Type, string FieldSummary);
 
 public partial class ProtocolSnifferWindow : Window
 {
@@ -70,6 +76,18 @@ public partial class ProtocolSnifferWindow : Window
 
             if (routing is not null)
                 RoutingGrid.ItemsSource = routing.Routes;
+
+            var questNpc = await _api.GetAsync<QuestNpcEventsSnapshot>(
+                $"api/v1/accounts/{Uri.EscapeDataString(_accountId)}/quest-npc-events");
+            if (questNpc is not null)
+            {
+                QuestNpcEventsGrid.ItemsSource = questNpc.Events.Select(item => new QuestNpcEventRow(
+                    item.Timestamp,
+                    item.Type,
+                    item.Fields.Count == 0 ? "(no scalar fields)" : string.Join("  •  ",
+                        item.Fields.Select(field => $"#{field.Number} {field.Path}={field.Value}")))).ToList();
+                QuestNpcCountsGrid.ItemsSource = questNpc.Counts;
+            }
 
             if (capture is not null)
             {
