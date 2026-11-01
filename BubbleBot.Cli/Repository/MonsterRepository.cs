@@ -35,8 +35,8 @@ internal static class MonsterRepository
         try
         {
             return MonstersById.Value.Values
-                .Where(monster => monster.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(monster => monster.Name, StringComparer.OrdinalIgnoreCase)
+                .Where(monster => DatacenterService.GetText((uint)monster.NameId).Contains(query, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(monster => DatacenterService.GetText((uint)monster.NameId), StringComparer.OrdinalIgnoreCase)
                 .Take(Math.Clamp(limit, 1, 50))
                 .ToArray();
         }
