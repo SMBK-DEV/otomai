@@ -155,16 +155,11 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
     {
         value = 0;
         if (index >= args.Count) return false;
-        var number = args[index].ToObject();
-        try
-        {
-            value = Convert.ToInt64(number, System.Globalization.CultureInfo.InvariantCulture);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+        if (args[index].Type != DataType.Number) return false;
+        var number = args[index].Number;
+        if (number < long.MinValue || number > long.MaxValue) return false;
+        value = (long)number;
+        return true;
     }
 
     private static string JoinArgs(CallbackArguments args) =>
