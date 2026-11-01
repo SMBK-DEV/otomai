@@ -698,6 +698,19 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
         _workflowService.OnFightEnd();
     }
 
+    /// <summary>
+    /// Records an achievement ID confirmed by a server event. This is a
+    /// session observation, not a complete historical achievement journal.
+    /// </summary>
+    public void RecordObservedCompletedAchievement(int achievementId)
+    {
+        if (achievementId > 0)
+            State.ObservedCompletedAchievementIds.Add(achievementId);
+    }
+
+    public IReadOnlyCollection<int> GetObservedCompletedAchievementIds() =>
+        State.ObservedCompletedAchievementIds.OrderBy(x => x).ToArray();
+
     public void KoliRegister()
     {
         _workflowService.KoliRegister();
