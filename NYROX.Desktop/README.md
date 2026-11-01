@@ -45,7 +45,7 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 - Binds only to `127.0.0.1:48621`.
 - Every request requires `X-NYROX-Token`.
 - The token is generated from 48 cryptographically random bytes and protected with Windows DPAPI for the current user under `%LOCALAPPDATA%\NYROX\control.token`.
-- API routes cover status, live accounts, script listing/loading/stopping, account connection/disconnection, profiles, scheduler status/start/stop and recent logs.
+- API routes cover status, live accounts, script listing/loading/stopping, account connection/disconnection, profile create/list/delete, scheduler status/start/stop and recent logs.
 - No CORS policy or public listener is enabled.
 - The first desktop release has one local owner/admin token. Viewer/Operator role provisioning, audit history, remote control and in-game F10 overlay are not implemented yet.
 
