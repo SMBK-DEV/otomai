@@ -79,6 +79,7 @@ internal sealed class GameMessageRouter : IClientMessageRouter
                                          notifications,
                                          mapLifecycleService,
                                          treasureHuntService),
+            new GameQuestNpcProtocolObserverHandler(),
             new GameFightHandler(context,
                                  transportService,
                                  notifications,
