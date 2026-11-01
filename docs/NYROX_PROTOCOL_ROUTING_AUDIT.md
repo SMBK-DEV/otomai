@@ -38,6 +38,20 @@ This is real application-level dispatch, not a guess based on protobuf field num
 - **Not yet decoded:** protobuf field names. The generic sniffer only walks wire types and field numbers; schema descriptors or generated message metadata are needed for named fields.
 - **Not tested live:** no Dofus runtime, account, or Lua script was started for this audit.
 
+## Runtime routing telemetry now implemented
+
+The Sniffer now has a **Handler routing** tab backed by the authenticated local Control API endpoint
+`GET /api/v1/accounts/{id}/protocol-routing`. It records the incoming protocol type, the exact handler class
+that returned `true`, and the count for the current account session. The router's direct
+`MapMovementConfirmResponse` branch is labeled `GameMessageRouter (special case)`; messages declined by
+all registered handlers are labeled `UNHANDLED`.
+
+The observation is type-name-only: it stores no message payload, is capped at 200 distinct types per account,
+and resets when a new `BotGameClient` session is constructed. It is separate from opt-in packet payload capture.
+The endpoint uses the existing loopback-only authenticated Control API.
+
 ## Next implementation target
 
-Add per-account runtime routing telemetry to the Sniffer: `message type → handler class → count`, with a separate `router special-case` and `unhandled` category. Then use the exact generated protocol definitions / descriptors to add safe named-field decoding. Quest and NPC dialogue work should begin only after their actual message types and handlers are identified from source or an explicitly enabled capture session.
+Use the generated protocol definitions / descriptors and the exact type mapping to add safe named-field decoding.
+Then identify Quest and NPC dialogue messages from their actual definitions or a deliberately enabled capture
+session. Do not label generic map/context/fight traffic as dungeon-specific without evidence.
