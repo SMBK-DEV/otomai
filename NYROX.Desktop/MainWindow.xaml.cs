@@ -1,4 +1,4 @@
-using System.Net.Http;
+using System.Net.Http;\nusing System.Runtime.InteropServices;\nusing System.Windows.Interop;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -11,12 +11,12 @@ public partial class MainWindow : Window
     private readonly ControlApiClient _api;
     private readonly string _token;
     private readonly DispatcherTimer _refreshTimer;
-    private bool _refreshing;
+    private bool _refreshing;\n    private const int AdminHotkeyId = 0x4E59;\n    private const int WmHotkey = 0x0312;\n    private const uint ModNoRepeat = 0x4000;\n    private const uint VkF10 = 0x79;\n    private HwndSource? _hotkeySource;\n    private AdminPanelWindow? _adminWindow;
 
     public MainWindow(string token)
     {
         InitializeComponent();
-        _token = token;
+        _token = token;\n        SourceInitialized += (_, _) => RegisterAdminHotkey();
         _api = new ControlApiClient(token);
         ProfileCombo.DisplayMemberPath = nameof(ProfileInfo.Name);
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
@@ -32,6 +32,50 @@ public partial class MainWindow : Window
             _api.Dispose();
         };
     }
+
+
+    private void RegisterAdminHotkey()
+    {
+        var handle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        _hotkeySource = HwndSource.FromHwnd(handle);
+        _hotkeySource?.AddHook(HandleHotkey);
+        if (!RegisterHotKey(handle, AdminHotkeyId, ModNoRepeat, VkF10))
+            StatusText.Text = "F10 is unavailable (another application may own the hotkey). Use the Admin menu shortcut from Settings.";
+        else
+            StatusText.Text = "Global F10 Admin hotkey registered. Press F10 to open the quick panel.";
+    }
+
+    private IntPtr HandleHotkey(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (message == WmHotkey && wParam.ToInt32() == AdminHotkeyId)
+        {
+            OpenAdminPanel();
+            handled = true;
+        }
+        return IntPtr.Zero;
+    }
+
+    private void OpenAdminPanel()
+    {
+        if (_adminWindow is null)
+        {
+            _adminWindow = new AdminPanelWindow(_token);
+            _adminWindow.Closed += (_, _) => _adminWindow = null;
+        }
+
+        if (!_adminWindow.IsVisible)
+            _adminWindow.Show();
+        if (_adminWindow.WindowState == WindowState.Minimized)
+            _adminWindow.WindowState = WindowState.Normal;
+        _adminWindow.Topmost = true;
+        _adminWindow.Activate();
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint modifiers, uint virtualKey);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
     private AccountStatus? SelectedAccount => AccountsGrid.SelectedItem as AccountStatus;
 
