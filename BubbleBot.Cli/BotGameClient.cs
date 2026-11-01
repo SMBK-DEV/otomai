@@ -522,7 +522,10 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     /// Loads a reviewed Lua script from the Scripts directory for this account.
     /// Each BotGameClient owns its own interpreter and global environment.
     /// </summary>
-    public string? LoadedLuaScriptPath => _loadedLuaScriptPath;
+    public string? LoadedLuaScriptPath
+    {
+        get { lock (_luaScriptSync) return _loadedLuaScriptPath; }
+    }
 
     public LuaScriptExecutionResult LoadLuaScriptFromFile(string relativePath)
     {
@@ -575,13 +578,13 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     {
         lock (_luaScriptSync)
         {
-        if (_luaScriptHost is null)
-        {
-            return LuaScriptExecutionResult.Failure(
-                new InvalidOperationException("No Lua script is loaded for this account."));
-        }
+            if (_luaScriptHost is null)
+            {
+                return LuaScriptExecutionResult.Failure(
+                    new InvalidOperationException("No Lua script is loaded for this account."));
+            }
 
-        return _luaScriptHost.Invoke(callbackName, arguments);
+            return _luaScriptHost.Invoke(callbackName, arguments);
         }
     }
 
