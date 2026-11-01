@@ -400,6 +400,58 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
     {
         var t = new Table(script);
         t.Set("isInFight", Fn(() => DynValue.NewBoolean(_client.IsInFight)));
+        t.Set("currentTurn", Fn(() => _client.FightInfo is null
+            ? DynValue.NewNumber(0) : DynValue.NewNumber(_client.FightInfo.Turn)));
+        t.Set("isPreparation", Fn(() => DynValue.NewBoolean(
+            _client.FightInfo?.IsInPreparation ?? false)));
+        t.Set("isMyTurn", Fn(() => DynValue.NewBoolean(
+            _client.FightInfo?.FighterPlaying?.Id == _client.PlayerId)));
+        t.Set("isMyTurnReady", Fn(() => DynValue.NewBoolean(
+            _client.FightInfo?.IsMyTurnReady ?? false)));
+        t.Set("getActors", DynValue.NewCallback((_, _) =>
+        {
+            var result = new Table(script);
+            var fight = _client.FightInfo;
+            if (fight is null) return DynValue.NewTable(result);
+
+            var index = 1;
+            foreach (var actor in fight.ActorPositions.Values.OrderBy(x => x.Id))
+            {
+                var row = new Table(script);
+                row.Set("id", DynValue.NewNumber(actor.Id));
+                row.Set("name", DynValue.NewString(actor.Name));
+                row.Set("breed", DynValue.NewNumber(actor.Breed));
+                row.Set("team", DynValue.NewNumber(actor.Team));
+                row.Set("cellId", DynValue.NewNumber(actor.CellId));
+                row.Set("health", DynValue.NewNumber(actor.GetHealthPoints()));
+                row.Set("maxHealth", DynValue.NewNumber(actor.GetMaxHealthPoints()));
+                row.Set("dead", DynValue.NewBoolean(actor.IsForcedDead));
+                row.Set("invisible", DynValue.NewBoolean(actor.IsInvisible));
+                row.Set("summoned", DynValue.NewBoolean(actor.Summoned));
+                result.Set(index++, DynValue.NewTable(row));
+            }
+            return DynValue.NewTable(result);
+        }));
+        t.Set("getActor", DynValue.NewCallback((_, args) =>
+        {
+            if (!TryGetNumber(args, 0, out var id) || id < long.MinValue || id > long.MaxValue)
+                return DynValue.Nil;
+            var actor = _client.FightInfo?.ActorPositions.GetValueOrDefault((long)id);
+            if (actor is null) return DynValue.Nil;
+
+            var row = new Table(script);
+            row.Set("id", DynValue.NewNumber(actor.Id));
+            row.Set("name", DynValue.NewString(actor.Name));
+            row.Set("breed", DynValue.NewNumber(actor.Breed));
+            row.Set("team", DynValue.NewNumber(actor.Team));
+            row.Set("cellId", DynValue.NewNumber(actor.CellId));
+            row.Set("health", DynValue.NewNumber(actor.GetHealthPoints()));
+            row.Set("maxHealth", DynValue.NewNumber(actor.GetMaxHealthPoints()));
+            row.Set("dead", DynValue.NewBoolean(actor.IsForcedDead));
+            row.Set("invisible", DynValue.NewBoolean(actor.IsInvisible));
+            row.Set("summoned", DynValue.NewBoolean(actor.Summoned));
+            return DynValue.NewTable(row);
+        }));
         return t;
     }
 
