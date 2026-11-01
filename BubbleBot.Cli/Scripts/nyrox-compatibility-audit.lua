@@ -19,6 +19,8 @@ local checks = {
     {"inventory.countItem", inventory, "countItem"},
     {"inventory.equipItem", inventory, "equipItem"},
     {"inventory.useItemByGID", inventory, "useItemByGID"},
+    {"gameData.getMonster", gameData, "getMonster"},
+    {"gameData.searchMonsters", gameData, "searchMonsters"},
     {"fight.isInFight", fight, "isInFight"},
     {"bot.isFighting", bot, "isFighting"},
     {"global.isInFight", global, "isInFight"},
