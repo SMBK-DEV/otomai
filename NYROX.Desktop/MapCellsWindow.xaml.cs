@@ -14,7 +14,7 @@ internal sealed record MapCellsSnapshot(
 internal sealed record MapCellSnapshot(
     int Id, int X, int Y, bool Visible, bool Walkable, bool LineOfSight,
     bool WalkableDuringFight, bool FarmCell, int Floor, int MapChangeData, int Arrow,
-    bool Interactive, int[] InteractiveElementIds, bool Occupied)
+    bool Interactive, int[] InteractiveElementIds, string[] InteractiveElementDetails, bool Occupied)
 {
     private static int _currentCell = -1;
     internal static void SetCurrentCell(int cellId) => _currentCell = cellId;
@@ -68,8 +68,8 @@ public partial class MapCellsWindow : Window
 
             MapInfoText.Text =
                 $"Account {_accountId} • Map {snapshot.MapId} • ({snapshot.PosX},{snapshot.PosY}) • Cell {snapshot.CurrentCell}" +
-                $"\\nAdjacent maps — N: {FormatMapId(snapshot.TopMapId)}  E: {FormatMapId(snapshot.RightMapId)}  S: {FormatMapId(snapshot.BottomMapId)}  W: {FormatMapId(snapshot.LeftMapId)}" +
-                $"\\nWorld-graph transitions: {(snapshot.Transitions.Length == 0 ? "none detected" : string.Join(", ", snapshot.Transitions))}" +
+                $"\nAdjacent maps — N: {FormatMapId(snapshot.TopMapId)}  E: {FormatMapId(snapshot.RightMapId)}  S: {FormatMapId(snapshot.BottomMapId)}  W: {FormatMapId(snapshot.LeftMapId)}" +
+                $"\nWorld-graph transitions: {(snapshot.Transitions.Length == 0 ? "none detected" : string.Join(", ", snapshot.Transitions))}" +
                 (snapshot.InFight ? " • IN FIGHT" : "");
 
             CellDetailsText.Text = $"Loaded {snapshot.Cells.Count} cells. Select a cell to inspect it.";
@@ -93,6 +93,7 @@ public partial class MapCellsWindow : Window
             $"Cell {cell.Id} • Coordinates ({cell.X},{cell.Y}) • Visible: {cell.Visible} • Walkable: {cell.Walkable} • " +
             $"LOS: {cell.LineOfSight} • Walkable in fight: {cell.WalkableDuringFight} • Farm: {cell.FarmCell} • Floor: {cell.Floor} • " +
             $"MapChangeData: {cell.MapChangeData} • Arrow: {cell.Arrow} • Occupied: {cell.Occupied} • Interactive: {cell.Interactive} • " +
-            $"Element IDs: {(cell.InteractiveElementIds.Length == 0 ? "none" : string.Join(", ", cell.InteractiveElementIds))}";
+            $"Element IDs: {(cell.InteractiveElementIds.Length == 0 ? "none" : string.Join(", ", cell.InteractiveElementIds))}" +
+            $"\nInteractive details: {(cell.InteractiveElementDetails.Length == 0 ? "none" : string.Join(" | ", cell.InteractiveElementDetails))}";
     }
 }
