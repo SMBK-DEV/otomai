@@ -16,6 +16,9 @@ using BubbleBot.Cli.Services.Fight;
 using BubbleBot.Cli.Services.Maps;
 using BubbleBot.Cli.Services.Parties;
 using BubbleBot.Cli.Services.TreasureHunts;
+using BubbleBot.Cli.Scripting;
+using BubbleBot.Scripting;
+using MoonSharp.Interpreter;
 using Discord;
 
 namespace BubbleBot.Cli;
@@ -63,6 +66,7 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     private readonly ClientTransportService _transportService;
     private readonly ClientVerificationService _verificationService;
     private readonly GameMessageRouter _messageRouter;
+    private LuaScriptHost? _luaScriptHost;
     private GameRuntimeState State => _context.State;
 
     public BotGameClient(
@@ -502,6 +506,66 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     }
     public List<long> MapsWithZaap => ZaapRoute;
 
+
+    /// <summary>
+    /// Loads a reviewed Lua script from the Scripts directory for this account.
+    /// Each BotGameClient owns its own interpreter and global environment.
+    /// </summary>
+    public LuaScriptExecutionResult LoadLuaScriptFromFile(string relativePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(relativePath);
+
+        var scriptsRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "Scripts"));
+        var fullPath = Path.GetFullPath(Path.Combine(scriptsRoot, relativePath));
+        var rootPrefix = scriptsRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? scriptsRoot
+            : scriptsRoot + Path.DirectorySeparatorChar;
+
+        if (!fullPath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return LuaScriptExecutionResult.Failure(
+                new UnauthorizedAccessException("Lua scripts must be inside the Scripts directory."));
+        }
+
+        if (!File.Exists(fullPath))
+        {
+            return LuaScriptExecutionResult.Failure(
+                new FileNotFoundException("Lua script file was not found.", fullPath));
+        }
+
+        StopLuaScript();
+        _luaScriptHost = new LuaScriptHost(
+            [new BubbleBotRuntimeAdapter(this)],
+            message => LogInfo("[LUA] {Message}", message));
+
+        var result = _luaScriptHost.Load(File.ReadAllText(fullPath), Path.GetFileName(fullPath));
+        if (!result.Succeeded)
+        {
+            StopLuaScript();
+        }
+
+        return result;
+    }
+
+    /// <summary>Invokes a named callback in this account's loaded Lua script.</summary>
+    public LuaScriptExecutionResult InvokeLuaCallback(string callbackName, params DynValue[] arguments)
+    {
+        if (_luaScriptHost is null)
+        {
+            return LuaScriptExecutionResult.Failure(
+                new InvalidOperationException("No Lua script is loaded for this account."));
+        }
+
+        return _luaScriptHost.Invoke(callbackName, arguments);
+    }
+
+    /// <summary>Stops and disposes this account's Lua interpreter.</summary>
+    public void StopLuaScript()
+    {
+        _luaScriptHost?.Dispose();
+        _luaScriptHost = null;
+    }
+
     protected override void OnConnected()
     {
         _sessionService.OnConnected(_workflowService);
@@ -509,6 +573,7 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
 
     protected override void OnDisconnected()
     {
+        StopLuaScript();
         _sessionService.OnDisconnected();
     }
 
