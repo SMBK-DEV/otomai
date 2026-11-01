@@ -180,6 +180,11 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
     {
         var t = new Table(script);
         t.Set("isInFight", Fn(() => DynValue.NewBoolean(_client.IsInFight)));
+        // MoonBot scripts use a monotonic-looking seconds value for log
+        // deduplication and bounded cooldown bookkeeping. This is wall-clock
+        // Unix time in seconds; it is read-only and never sleeps or blocks.
+        t.Set("getTime", Fn(() => DynValue.NewNumber(
+            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d)));
         t.Set("printMessage", DynValue.NewCallback((_, args) =>
         {
             _client.LogInfo("[LUA] {Message}", JoinArgs(args));
