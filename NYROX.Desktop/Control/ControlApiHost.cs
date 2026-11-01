@@ -109,8 +109,10 @@ internal sealed class ControlApiHost : IAsyncDisposable
                 .Select(element =>
                 {
                     var data = map.Data.GetInteractive(element.ElementId);
-                    var skills = string.Join(", ", element.EnabledSkills.Select(skill =>
-                        $"{skill.SkillId}:{skill.SkillInstanceUid}"));
+                    var skills = element.EnabledSkills is null
+                        ? string.Empty
+                        : string.Join(", ", element.EnabledSkills.Select(skill =>
+                            $"{skill.SkillId}:{skill.SkillInstanceUid}"));
                     return (
                         CellId: data?.CellId,
                         ElementId: element.ElementId,
