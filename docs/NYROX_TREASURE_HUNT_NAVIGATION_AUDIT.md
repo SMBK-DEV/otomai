@@ -46,18 +46,19 @@ This intentionally prefers a missing local match over a fabricated or ambiguous 
 - `GameNavigationService` executes the selected edge's first transition as a scroll,
   map action, or interactive action.
 
-## Open engineering risks (not changed in this audit)
+## Navigation hardening committed
 
-1. `WorldPathFinderService` is a singleton but stores request-specific fields
-   (`_from`, `_to`, `_linkedZone`, and `_callback`). Concurrent path requests from
-   multiple clients may overwrite each other's routing context. This needs an isolated
-   request context and offline regression coverage before changing navigation behavior.
-2. `AStarService.HasValidTransition()` has compact criterion parsing. Criteria containing
-   compound operators and multiple transitions deserve dedicated fixtures before altering
-   its allow/deny behavior.
-3. `GameNavigationService` selects `FirstOrDefault()` from an edge's transitions. The
-   ordering and suitability of multiple transitions should be validated against actual
-   world-graph data before choosing a different transition.
+1. `WorldPathFinderService` now creates a private `PathSearchContext` per `FindPath()` call.
+   Source vertex, destination map, linked-zone iteration, completion flag, and callback are
+   no longer stored as mutable singleton fields. This removes the identified cross-request
+   state overwrite in the path finder. The world graph remains shared read-only data.
+2. `AStarService.HasValidTransition()` now rejects a non-empty, non-compound criterion
+   shorter than two characters instead of slicing it with `[..2]` and throwing
+   `ArgumentOutOfRangeException`. The whitelist is static and reused. Existing compound
+   criterion and whitelist decisions are otherwise preserved.
+3. `GameNavigationService` still selects `FirstOrDefault()` from an edge's transitions.
+   Transition ordering and suitability need fixtures based on actual world-graph data before
+   changing that behavior.
 
 ## Verification boundary
 
