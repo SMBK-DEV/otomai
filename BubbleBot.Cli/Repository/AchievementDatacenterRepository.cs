@@ -11,13 +11,33 @@ internal static class AchievementDatacenterRepository
             .GroupBy(achievement => achievement.Id)
             .ToDictionary(group => group.Key, group => group.First()));
 
+    private static readonly Lazy<IReadOnlyDictionary<int, IReadOnlyList<AchievementObjectives>>> ObjectivesByAchievementId =
+        new(() => DatacenterService.Load<AchievementObjectives>().Values
+            .GroupBy(objective => objective.AchievementId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<AchievementObjectives>)group
+                    .OrderBy(objective => objective.Order)
+                    .ToArray()));
+
     public static Achievements? Get(int id)
     {
         try { return AchievementsById.Value.TryGetValue(id, out var achievement) ? achievement : null; }
         catch (InvalidOperationException) { return null; }
     }
 
-    public static IReadOnlyList<AchievementObjectives> GetObjectives(int achievementId)\n    {\n        try\n        {\n            return DatacenterService.Load<AchievementObjectives>().Values\n                .Where(objective => objective.AchievementId == achievementId)\n                .OrderBy(objective => objective.Order)\n                .ToArray();\n        }\n        catch (InvalidOperationException) { return []; }\n    }\n\n    public static IReadOnlyList<Achievements> Search(string query, int limit)
+    public static IReadOnlyList<AchievementObjectives> GetObjectives(int achievementId)
+    {
+        try
+        {
+            return ObjectivesByAchievementId.Value.TryGetValue(achievementId, out var objectives)
+                ? objectives
+                : [];
+        }
+        catch (InvalidOperationException) { return []; }
+    }
+
+    public static IReadOnlyList<Achievements> Search(string query, int limit)
     {
         if (string.IsNullOrWhiteSpace(query) || limit <= 0) return [];
         try
