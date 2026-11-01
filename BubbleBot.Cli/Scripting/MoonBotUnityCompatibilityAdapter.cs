@@ -162,6 +162,14 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
         return true;
     }
 
-    private static string JoinArgs(CallbackArguments args) =>
-        string.Join(" ", args.Select(x => x.Type == DataType.Nil ? "nil" : x.ToPrintString()));
+    private static string JoinArgs(CallbackArguments args)
+    {
+        var parts = new List<string>(args.Count);
+        for (var i = 0; i < args.Count; i++)
+        {
+            var value = args[i];
+            parts.Add(value.Type == DataType.Nil ? "nil" : value.ToPrintString());
+        }
+        return string.Join(" ", parts);
+    }
 }
