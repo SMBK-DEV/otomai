@@ -31,6 +31,28 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
         script.Globals.Set("bot", DynValue.NewTable(BuildBot(script)));
         script.Globals.Set("global", DynValue.NewTable(BuildGlobal(script)));
         script.Globals.Set("console", DynValue.NewTable(BuildConsole(script)));
+        script.Globals.Set("nyrox", DynValue.NewTable(BuildNyrox(script)));
+    }
+
+    private Table BuildNyrox(Script script)
+    {
+        var t = new Table(script);
+        // Diagnostic discovery only: event names/counts, never payloads or inferred state.
+        t.Set("getObservedDomainProtocolEvents", DynValue.NewCallback((_, _) =>
+        {
+            var result = new Table(script);
+            var index = 1;
+            foreach (var pair in _client.GetObservedUnmappedDomainEvents().OrderBy(x => x.Key, StringComparer.Ordinal))
+            {
+                var row = new Table(script);
+                row.Set("type", DynValue.NewString(pair.Key));
+                row.Set("count", DynValue.NewNumber(pair.Value));
+                result.Set(index++, DynValue.NewTable(row));
+            }
+            return DynValue.NewTable(result);
+        }));
+        t.Set("protocolObservationScope", Fn(() => DynValue.NewString("current-session-unmapped-domain-event-types-only")));
+        return t;
     }
 
     private Table BuildMap(Script script)
