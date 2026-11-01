@@ -340,6 +340,36 @@ public partial class MainWindow : Window
         await RefreshDataAsync();
     }
 
+    private async void DeleteProfile_Click(object sender, RoutedEventArgs e)
+    {
+        var profile = ProfileCombo.SelectedItem as ProfileInfo;
+        if (profile is null)
+        {
+            StatusText.Text = "Select a saved profile first.";
+            return;
+        }
+
+        if (MessageBox.Show(
+            $"Permanently delete local profile '{profile.Name}'? This does not delete its Lua script.",
+            "Confirm profile deletion", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            using var response = await _api.DeleteAsync($"api/v1/profiles/{Uri.EscapeDataString(profile.Name)}");
+            var body = await response.Content.ReadAsStringAsync();
+            StatusText.Text = response.IsSuccessStatusCode
+                ? $"Profile '{profile.Name}' deleted. Its Lua script was kept."
+                : $"Profile deletion failed: {body}";
+            if (response.IsSuccessStatusCode)
+            {
+                ProfileNameBox.Clear();
+                await RefreshDataAsync();
+            }
+        }
+        catch (Exception exception) { StatusText.Text = exception.Message; }
+    }
+
     private void ProfileCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ProfileCombo.SelectedItem is not ProfileInfo profile) return;
