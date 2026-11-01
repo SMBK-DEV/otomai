@@ -263,8 +263,8 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
 
             var row = new Table(script);
             row.Set("id", DynValue.NewNumber(achievement.Id));
-            row.Set("name", DynValue.NewString(DatacenterService.GetText(achievement.NameId)));
-            row.Set("description", DynValue.NewString(DatacenterService.GetText(achievement.DescriptionId)));
+            row.Set("name", DynValue.NewString(DatacenterService.GetText(unchecked((uint)achievement.NameId))));
+            row.Set("description", DynValue.NewString(DatacenterService.GetText(unchecked((uint)achievement.DescriptionId))));
             row.Set("categoryId", DynValue.NewNumber(achievement.CategoryId));
             row.Set("points", DynValue.NewNumber(achievement.Points));
             row.Set("level", DynValue.NewNumber(achievement.Level));
@@ -277,7 +277,7 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
             {
                 var objectiveRow = new Table(script);
                 objectiveRow.Set("id", DynValue.NewNumber(objective.Id));
-                objectiveRow.Set("name", DynValue.NewString(DatacenterService.GetText(objective.NameId)));
+                objectiveRow.Set("name", DynValue.NewString(DatacenterService.GetText(unchecked((uint)objective.NameId))));
                 objectiveRow.Set("order", DynValue.NewNumber(objective.Order));
                 objectiveRow.Set("criterion", DynValue.NewString(objective.Criterion));
                 objectives.Set(objectiveIndex++, DynValue.NewTable(objectiveRow));
