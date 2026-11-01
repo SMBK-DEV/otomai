@@ -16,7 +16,7 @@
             <DockPanel Margin="18">
                 <StackPanel DockPanel.Dock="Top">
                     <TextBlock Text="NYROX" FontSize="27" FontWeight="Bold" Foreground="{StaticResource Accent}"/>
-                    <TextBlock Text="CONTROL CENTER" FontSize="10" CharacterSpacing="180" Foreground="{StaticResource TextMuted}" Margin="2,0,0,28"/>
+                    <TextBlock Text="CONTROL CENTER" FontSize="10" Foreground="{StaticResource TextMuted}" Margin="2,0,0,28"/>
                     <Button Content="Overview" HorizontalContentAlignment="Left"/>
                     <Button Content="Accounts" HorizontalContentAlignment="Left"/>
                     <Button Content="Scripts &amp; Profiles" HorizontalContentAlignment="Left"/>
