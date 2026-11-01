@@ -16,8 +16,9 @@ The `fight` namespace exposes read-only state from the active `BotGameClient.Fig
 - `fight.isInFight()`, `fight.currentTurn()`, `fight.isPreparation()`, `fight.isMyTurn()`, and `fight.isMyTurnReady()`.
 - `fight.getActors()` returns currently known actors with id, name, breed, team, cellId, health, maxHealth, dead, invisible and summoned fields.
 - `fight.getActor(id)` returns the same snapshot for one actor, or nil when that actor is not present.
+- `fight.passTurn()` requests the current player's turn to end. It returns false unless the account is connected, in a fight, the fight is active, and it is that player's turn.
 
-These are snapshots of actors already decoded by the current session. They do not issue packets or perform combat actions. Combat action APIs remain intentionally unavailable until each action is mapped to a verified protocol request and validated against the runtime.
+These are snapshots of actors already decoded by the current session. The snapshot functions do not issue packets. `fight.passTurn()` is the one exposed combat action and delegates to the runtime's existing `FightInfo.PassTurn()` method behind turn/state guards. Other combat action APIs remain intentionally unavailable until each action is mapped to a verified protocol request and validated against the runtime.
 
 ## NYROX Unity compatibility adapter
 
