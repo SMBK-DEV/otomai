@@ -69,6 +69,19 @@ This intentionally prefers a missing local match over a fabricated or ambiguous 
    rather than blindly incrementing and potentially skipping navigation steps. This is a
    defensive route-state fix; live transition behavior remains unverified.
 
+## Zaap selection hardening
+
+`Map.GetClosestZaap()` and `Map.GetClosestZaapId()` now share one candidate-selection
+helper. Both apply the same exclusions (AreaId 45, map 179831296, and WorldMap > 1),
+return a safe no-result value when no candidate exists, and use deterministic map-ID
+tie-breaking. Previously the ID-only helper omitted the WorldMap filter and could select
+a waypoint that the display helper would reject.
+
+The selection still uses straight-line coordinate distance, not graph reachability or
+actual travel cost. It is a nearest-coordinate hint, not proof that a Zaap is reachable
+from the current map or that the account has activated it. A future route planner must
+validate graph reachability and account-specific Zaap activation before choosing travel.
+
 ## Verification boundary
 
 - Repository source and data-flow inspection only.
