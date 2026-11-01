@@ -40,12 +40,25 @@ def classes_in(source: str):
         closing = matching_brace(source, opening)
         if closing >= 0: yield match.group(1), source[opening + 1:closing]
 
+def without_nested_class_bodies(body: str) -> str:
+    """Mask nested class bodies so their fields are not attributed to the parent."""
+    chars = list(body)
+    for match in CLASS_RE.finditer(body):
+        opening = body.find("{", match.end())
+        if opening < 0: continue
+        closing = matching_brace(body, opening)
+        if closing >= 0:
+            for index in range(opening, closing + 1):
+                chars[index] = " "
+    return "".join(chars)
+
 def inventory(source_root: Path, mapping_path: Path):
     mapping = json.loads(mapping_path.read_text(encoding="utf-8-sig"))
     rows = []
     for path in sorted(source_root.rglob("*.cs")):
         source = path.read_text(encoding="utf-8-sig", errors="replace")
         for class_name, body in classes_in(source):
+            body = without_nested_class_bodies(body)
             type_match = TYPE_URL_RE.search(body)
             if not type_match: continue
             type_url = type_match.group(1)
@@ -55,9 +68,9 @@ def inventory(source_root: Path, mapping_path: Path):
                 if not prop: continue
                 declaration = " ".join(prop.group("decl").split())
                 name = prop.group("name")
-                if f"ShouldSerialize{name}()" in tail: presence = "optional"
+                if "List<" in declaration: presence = "repeated"
+                elif f"ShouldSerialize{name}()" in tail: presence = "optional"
                 elif re.search(r"\brequired\b", declaration): presence = "required"
-                elif "List<" in declaration: presence = "repeated"
                 else: presence = "not-explicit"
                 rows.append({
                     "source_file": path.as_posix(), "type_url": type_url,
