@@ -64,6 +64,7 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     private readonly GameSessionService _sessionService;
     private readonly GameWorkflowService _workflowService;
     private readonly ClientTransportService _transportService;
+    private readonly PacketCaptureStore _packetCaptureStore = new();
     private readonly ClientVerificationService _verificationService;
     private readonly GameMessageRouter _messageRouter;
     private readonly object _luaScriptSync = new();
@@ -129,7 +130,7 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
         State.ZaapMode = File.Exists("zaap") || File.Exists("zaap.txt");
 
         _notificationService = new GameNotificationService(_context);
-        _transportService = new ClientTransportService(_context, _notificationService, SendAsync);
+        _transportService = new ClientTransportService(_context, _notificationService, SendAsync, packetCapture: _packetCaptureStore);
         _verificationService = new ClientVerificationService(_context,
                                                              _transportService,
                                                              message => _notificationService.LogDiscord(message, true));
@@ -801,6 +802,9 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
 
     public IReadOnlyDictionary<string, int> GetObservedProtocolEvents() =>
         new Dictionary<string, int>(State.ObservedProtocolEvents, StringComparer.Ordinal);
+
+    /// <summary>In-memory packet payload capture; disabled by default and bounded.</summary>
+    public PacketCaptureStore PacketCapture => _packetCaptureStore;
 
     public void KoliRegister()
     {
