@@ -1,6 +1,9 @@
 name: Package NYROX Desktop (Windows x64)
 
 on:
+  push:
+    branches:
+      - nyrox/integration
   workflow_dispatch:
 
 permissions:
