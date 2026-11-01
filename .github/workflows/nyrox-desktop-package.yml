@@ -1,0 +1,29 @@
+name: Package NYROX Desktop (Windows x64)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore
+        run: dotnet restore NYROX.Desktop/NYROX.Desktop.csproj
+      - name: Publish self-contained Windows x64 app
+        run: dotnet publish NYROX.Desktop/NYROX.Desktop.csproj --configuration Release --runtime win-x64 --self-contained true --output publish
+      - name: Create ZIP package
+        shell: pwsh
+        run: Compress-Archive -Path publish\* -DestinationPath NYROX-Desktop-win-x64.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NYROX-Desktop-win-x64
+          path: NYROX-Desktop-win-x64.zip
+          if-no-files-found: error
+          retention-days: 14
