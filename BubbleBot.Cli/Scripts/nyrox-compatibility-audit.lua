@@ -28,6 +28,7 @@ local checks = {
     {"gameData.searchItems", gameData, "searchItems"},
     {"gameData.getAchievement", gameData, "getAchievement"},
     {"gameData.searchAchievements", gameData, "searchAchievements"},
+    {"nyrox.getObservedProtocolEvents", nyrox, "getObservedProtocolEvents"},
     {"nyrox.getObservedDomainProtocolEvents", nyrox, "getObservedDomainProtocolEvents"},
     {"nyrox.protocolObservationScope", nyrox, "protocolObservationScope"},
     {"fight.isInFight", fight, "isInFight"},
@@ -79,8 +80,11 @@ for _, name in ipairs(missing) do
 end
 
 -- This diagnostic reports event type names only; it does not infer quest/dialogue state.
+local protocolEvents = readOnlyCall(nyrox, "getObservedProtocolEvents")
 local domainEvents = readOnlyCall(nyrox, "getObservedDomainProtocolEvents")
-console.print("Observed unmapped domain protocol event types=",
+console.print("Observed incoming protocol event types=",
+    type(protocolEvents) == "table" and #protocolEvents or "unavailable")
+console.print("Observed unhandled protocol event types=",
     type(domainEvents) == "table" and #domainEvents or "unavailable")
 return {
     available = available,
@@ -92,6 +96,7 @@ return {
     kamas = kamas,
     inventoryCount = type(items) == "table" and #items or nil,
     unixSeconds = now,
+    observedProtocolEvents = protocolEvents,
     observedDomainProtocolEvents = domainEvents,
     observedCompletedAchievements = completedAchievements,
     achievementObservationScope = achievementScope
