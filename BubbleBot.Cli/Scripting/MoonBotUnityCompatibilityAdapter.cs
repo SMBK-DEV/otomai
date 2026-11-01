@@ -1,4 +1,6 @@
 using BubbleBot.Cli.Repository.Maps;
+using BubbleBot.Cli.Repository;
+using Bubble.Core.Datacenter;
 using BubbleBot.Scripting;
 using MoonSharp.Interpreter;
 
@@ -25,6 +27,7 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
         script.Globals.Set("fight", DynValue.NewTable(BuildFight(script)));
         script.Globals.Set("inventory", DynValue.NewTable(BuildInventory(script)));
         script.Globals.Set("success", DynValue.NewTable(BuildSuccess(script)));
+        script.Globals.Set("gameData", DynValue.NewTable(BuildGameData(script)));
         script.Globals.Set("bot", DynValue.NewTable(BuildBot(script)));
         script.Globals.Set("global", DynValue.NewTable(BuildGlobal(script)));
         script.Globals.Set("console", DynValue.NewTable(BuildConsole(script)));
@@ -185,6 +188,71 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
             return DynValue.NewBoolean(_client.GetObservedCompletedAchievementIds().Contains((int)id));
         }));
         t.Set("observationScope", Fn(() => DynValue.NewString("current-session-server-events-only")));
+        return t;
+    }
+
+    private Table BuildGameData(Script script)
+    {
+        var t = new Table(script);
+        // Static metadata comes from the locally installed Dofus Unity datacenter.
+        // This is read-only and intentionally does not call DofusDB or another remote API.
+        t.Set("getMonster", DynValue.NewCallback((_, args) =>
+        {
+            if (!TryGetNumber(args, 0, out var id) || id < ushort.MinValue || id > ushort.MaxValue)
+                return DynValue.Nil;
+
+            var monster = MonsterRepository.Get((ushort)id);
+            if (monster is null) return DynValue.Nil;
+
+            var row = new Table(script);
+            row.Set("id", DynValue.NewNumber(monster.Id));
+            row.Set("name", DynValue.NewString(DatacenterService.GetText((uint)monster.NameId)));
+            row.Set("isBoss", DynValue.NewBoolean(monster.IsBoss));
+            row.Set("isMiniBoss", DynValue.NewBoolean(monster.IsMiniBoss));
+            row.Set("isQuestMonster", DynValue.NewBoolean(monster.IsQuestMonster));
+
+            var grades = new Table(script);
+            var index = 1;
+            foreach (var grade in monster.Grades.OrderBy(x => x.Grade))
+            {
+                var gradeRow = new Table(script);
+                gradeRow.Set("grade", DynValue.NewNumber(grade.Grade));
+                gradeRow.Set("level", DynValue.NewNumber(grade.Level));
+                gradeRow.Set("lifePoints", DynValue.NewNumber(grade.LifePoints));
+                gradeRow.Set("actionPoints", DynValue.NewNumber(grade.ActionPoints));
+                gradeRow.Set("movementPoints", DynValue.NewNumber(grade.MovementPoints));
+                gradeRow.Set("earthResistance", DynValue.NewNumber(grade.EarthResistance));
+                gradeRow.Set("fireResistance", DynValue.NewNumber(grade.FireResistance));
+                gradeRow.Set("waterResistance", DynValue.NewNumber(grade.WaterResistance));
+                gradeRow.Set("airResistance", DynValue.NewNumber(grade.AirResistance));
+                gradeRow.Set("neutralResistance", DynValue.NewNumber(grade.NeutralResistance));
+                grades.Set(index++, DynValue.NewTable(gradeRow));
+            }
+            row.Set("grades", DynValue.NewTable(grades));
+            return DynValue.NewTable(row);
+        }));
+        t.Set("searchMonsters", DynValue.NewCallback((_, args) =>
+        {
+            if (args.Count == 0 || args[0].Type != DataType.String)
+                return DynValue.NewTable(new Table(script));
+
+            var limit = 20;
+            if (TryGetNumber(args, 1, out var requestedLimit))
+                limit = (int)Math.Clamp(requestedLimit, 1, 50);
+
+            var results = new Table(script);
+            var index = 1;
+            foreach (var monster in MonsterRepository.Search(args[0].String, limit))
+            {
+                var row = new Table(script);
+                row.Set("id", DynValue.NewNumber(monster.Id));
+                row.Set("name", DynValue.NewString(DatacenterService.GetText((uint)monster.NameId)));
+                row.Set("isBoss", DynValue.NewBoolean(monster.IsBoss));
+                row.Set("isMiniBoss", DynValue.NewBoolean(monster.IsMiniBoss));
+                results.Set(index++, DynValue.NewTable(row));
+            }
+            return DynValue.NewTable(results);
+        }));
         return t;
     }
 
