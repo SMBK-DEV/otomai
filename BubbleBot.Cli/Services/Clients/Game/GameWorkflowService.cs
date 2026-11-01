@@ -890,6 +890,71 @@ internal sealed class GameWorkflowService : GameClientServiceBase
                     ExchangeBidHouseSearchRequest.TypeUrl);
     }
 
+    /// <summary>
+    /// Equips an inventory item only into an empty compatible slot.
+    /// Existing equipment is never replaced by this Lua bridge.
+    /// </summary>
+    public bool EquipItem(int objectUid)
+    {
+        if (!Inventory.Items.TryGetValue(objectUid, out var wrapper) || wrapper.Template == null)
+            return false;
+
+        if (wrapper.Item.Position != (int)CharacterInventoryPositionEnum.InventoryPositionNotEquiped)
+            return false;
+
+        if (Info.Information?.Level is not int characterLevel ||
+            characterLevel < wrapper.Template.Level)
+            return false;
+
+        var position = GetPositionByTypeId(wrapper.Template.TypeId);
+        if (position == CharacterInventoryPositionEnum.InventoryPositionNotEquiped)
+            return false;
+
+        bool IsOccupied(CharacterInventoryPositionEnum slot) =>
+            Inventory.Items.Values.Any(x => x.Item.Position == (int)slot);
+
+        if (position == CharacterInventoryPositionEnum.InventoryPositionRingRight &&
+            IsOccupied(CharacterInventoryPositionEnum.InventoryPositionRingRight))
+        {
+            position = CharacterInventoryPositionEnum.InventoryPositionRingLeft;
+        }
+
+        if (IsOccupied(position))
+            return false;
+
+        SendRequest(new ObjectSetPositionRequest
+        {
+            ObjectUid = wrapper.Item.Item.Uid,
+            Position = (int)position,
+            Quantity = 1,
+            Quantity2 = 1
+        }, ObjectSetPositionRequest.TypeUrl);
+
+        LogInfo("Lua requested equip {ItemName} into empty slot {Position}",
+            wrapper.Template.Name, position);
+        return true;
+    }
+
+    /// <summary>Uses one usable item matching the requested template/GID.</summary>
+    public bool UseItemByGid(int gid)
+    {
+        var wrapper = Inventory.Items.Values
+            .Where(x => x.Template?.Id == gid && x.Template.Usable && x.Item.Item.Quantity > 0)
+            .OrderBy(x => x.Item.Item.Uid)
+            .FirstOrDefault();
+
+        if (wrapper == null)
+            return false;
+
+        SendRequest(new ObjectUseRequest
+        {
+            ObjectUid = wrapper.Item.Item.Uid
+        }, ObjectUseRequest.TypeUrl);
+
+        LogInfo("Lua requested use of {ItemName} (GID {Gid})", wrapper.Template!.Name, gid);
+        return true;
+    }
+
     public void KoliRegister()
     {
         if (ArenaStatus)
