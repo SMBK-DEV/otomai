@@ -712,15 +712,13 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
         State.ObservedCompletedAchievementIds.OrderBy(x => x).ToArray();
 
     /// <summary>
-    /// Records only the type name of an unmapped quest/dialogue/dungeon-related
-    /// protocol event. Payloads are deliberately not retained.
+    /// Records only the type name of an unhandled protocol event. Names are
+    /// retained without payloads and capped to 100 distinct types per session.
+    /// The router calls this only after every registered handler declines.
     /// </summary>
     public void RecordUnmappedDomainEvent(string? typeFullName)
     {
-        if (string.IsNullOrWhiteSpace(typeFullName) ||
-            !System.Text.RegularExpressions.Regex.IsMatch(
-                typeFullName, "Quest|Npc|Dialog|Dungeon|Challenge|Achievement",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+        if (string.IsNullOrWhiteSpace(typeFullName))
             return;
 
         if (State.ObservedUnmappedDomainEvents.Count >= 100 &&
