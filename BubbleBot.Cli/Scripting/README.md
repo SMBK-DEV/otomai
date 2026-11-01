@@ -16,7 +16,7 @@ The separate `MoonBotUnityCompatibilityAdapter` exposes only reviewed mappings.
 In addition to map, character, fight, inventory and session-success snapshots,
 `gameData.getMonster(id)` and `gameData.searchMonsters(text, limit)` read
 static monster metadata from the locally installed Dofus Unity datacenter.
-The search limit is capped at 50. This metadata API is read-only and makes no
+Both search limits are capped at 50. The metadata API is read-only and makes no
 HTTP request; it requires the host's datacenter initialization to have completed.
 
 No DofusDB integration is included. Quest progress, live NPC dialogue, dungeon
