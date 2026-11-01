@@ -21,7 +21,7 @@ internal sealed record DialogueChoiceView(int GroupIndex, int GroupId, int Reply
 internal sealed record InventoryTileView(int Uid, long Gid, string Name, int Quantity, int Position,
     int Level, int IconId, string Initial, string Tooltip);
 internal sealed record EquipmentView(string Slot, string Name);
-internal sealed record ExchangeReadyView(string Label, string Brush);
+internal sealed record ExchangeReadyView(string Label, Brush Brush);
 
 public partial class GameInterfaceWindow : Window
 {
@@ -141,10 +141,10 @@ public partial class GameInterfaceWindow : Window
 
         var ready = exchange.Ready.Select(item => new ExchangeReadyView(
             $"{(item.IsLocalPlayer ? "Vous" : $"Personnage #{item.CharacterId}")} : {(item.Ready ? "Prêt" : "Pas prêt")}",
-            item.Ready ? "#86D39A" : "#E6B96A")).ToList();
+            item.Ready ? Brushes.LightGreen : Brushes.Goldenrod)).ToList();
         ExchangeReadyList.ItemsSource = ready.Count > 0
             ? ready
-            : new[] { new ExchangeReadyView(exchange.Active ? "En attente des événements de validation…" : "Aucune validation reçue.", "#A8B4C2") };
+            : new[] { new ExchangeReadyView(exchange.Active ? "En attente des événements de validation…" : "Aucune validation reçue.", Brushes.LightGray) };
 
         if (!exchange.Active)
             ExchangeHintText.Text = "L'interface est prête. Quand un échange démarre, les objets observés et les états Ready seront affichés ici.";
