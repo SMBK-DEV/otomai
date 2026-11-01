@@ -1,4 +1,5 @@
 using System.Text;
+using System.Buffers.Binary;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -112,6 +113,7 @@ public partial class ProtocolSnifferWindow : Window
             return;
         }
 
+        var payload = Convert.FromHexString(packet.PayloadHex);
         var header = new StringBuilder()
             .AppendLine($"ID: {packet.Id}")
             .AppendLine($"Time (UTC): {packet.Timestamp:O}")
@@ -121,9 +123,103 @@ public partial class ProtocolSnifferWindow : Window
             .AppendLine($"Stored payload: {packet.StoredBytes} bytes")
             .AppendLine($"Truncated: {packet.Truncated}")
             .AppendLine()
-            .AppendLine("PROTOBUF ANY.VALUE — HEX")
+            .AppendLine("GENERIC PROTOBUF FIELD WALK (field numbers only)")
+            .Append(DecodeProtobufFields(payload))
+            .AppendLine()
+            .AppendLine("RAW PROTOBUF ANY.VALUE — HEX")
             .AppendLine(FormatHex(packet.PayloadHex));
         PayloadDetailText.Text = header.ToString();
+    }
+
+    private static string DecodeProtobufFields(byte[] data)
+    {
+        if (data.Length == 0) return "(empty)";
+        var output = new StringBuilder();
+        var offset = 0;
+        var fieldCount = 0;
+
+        while (offset < data.Length && fieldCount < 128)
+        {
+            if (!TryReadVarint(data, ref offset, out var key) || key == 0)
+            {
+                output.AppendLine($"Stopped at byte {offset}: invalid field key.");
+                break;
+            }
+
+            var fieldNumber = key >> 3;
+            var wireType = (int)(key & 7);
+            if (fieldNumber == 0)
+            {
+                output.AppendLine($"Stopped at byte {offset}: field number 0.");
+                break;
+            }
+
+            fieldCount++;
+            switch (wireType)
+            {
+                case 0:
+                    if (!TryReadVarint(data, ref offset, out var value))
+                    {
+                        output.AppendLine($"Field {fieldNumber}: truncated varint.");
+                        return output.ToString();
+                    }
+                    output.AppendLine($"Field {fieldNumber} • varint • {value}");
+                    break;
+                case 1:
+                    if (data.Length - offset < 8)
+                    {
+                        output.AppendLine($"Field {fieldNumber}: truncated fixed64.");
+                        return output.ToString();
+                    }
+                    var fixed64 = BinaryPrimitives.ReadUInt64LittleEndian(data.AsSpan(offset, 8));
+                    offset += 8;
+                    output.AppendLine($"Field {fieldNumber} • fixed64 • 0x{fixed64:X16}");
+                    break;
+                case 2:
+                    if (!TryReadVarint(data, ref offset, out var length) || length > (ulong)(data.Length - offset))
+                    {
+                        output.AppendLine($"Field {fieldNumber}: invalid length-delimited field.");
+                        return output.ToString();
+                    }
+                    var count = (int)length;
+                    var previewLength = Math.Min(count, 48);
+                    var preview = Convert.ToHexString(data.AsSpan(offset, previewLength));
+                    offset += count;
+                    output.AppendLine($"Field {fieldNumber} • bytes • length={count} • hex={preview}{(count > previewLength ? "…" : string.Empty)}");
+                    break;
+                case 5:
+                    if (data.Length - offset < 4)
+                    {
+                        output.AppendLine($"Field {fieldNumber}: truncated fixed32.");
+                        return output.ToString();
+                    }
+                    var fixed32 = BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(offset, 4));
+                    offset += 4;
+                    output.AppendLine($"Field {fieldNumber} • fixed32 • 0x{fixed32:X8}");
+                    break;
+                default:
+                    output.AppendLine($"Stopped at byte {offset}: unsupported wire type {wireType}.");
+                    return output.ToString();
+            }
+        }
+
+        if (fieldCount == 0) output.AppendLine("(no protobuf fields decoded)");
+        if (fieldCount >= 128) output.AppendLine("Field display capped at 128 entries.");
+        return output.ToString();
+    }
+
+    private static bool TryReadVarint(byte[] data, ref int offset, out ulong value)
+    {
+        value = 0;
+        var shift = 0;
+        while (offset < data.Length && shift < 64)
+        {
+            var current = data[offset++];
+            value |= (ulong)(current & 0x7F) << shift;
+            if ((current & 0x80) == 0) return true;
+            shift += 7;
+        }
+        return false;
     }
 
     private static string FormatHex(string hex)
