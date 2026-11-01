@@ -95,6 +95,23 @@ internal sealed class ControlApiHost : IAsyncDisposable
             return Results.Ok(accounts);
         });
 
+        app.MapGet("/api/v1/game-data/{category}", (string category, string? q, int? limit) =>
+        {
+            if (category is not ("items" or "monsters" or "achievements"))
+                return Results.BadRequest(new { error = "Category must be items, monsters or achievements." });
+            if (string.IsNullOrWhiteSpace(q) || q.Length > 100)
+                return Results.BadRequest(new { error = "Search query must contain 1-100 characters." });
+
+            var results = DesktopGameDataCatalog.Search(category, q, limit ?? 30);
+            return Results.Ok(new
+            {
+                category,
+                query = q,
+                count = results.Count,
+                results
+            });
+        });
+
         app.MapGet("/api/v1/scripts", () =>
         {
             var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "Scripts"));
