@@ -24,7 +24,7 @@ The adapter registers the documented Lua global names only where BubbleBot has a
 | character.kamas() | Inventory.Kamas | Current carried kamas |
 | fight.isInFight() | BotGameClient.IsInFight | Current fight state |
 | gameData.getMonster(id) | Local `Monsters` datacenter | Read-only monster identity, boss flags and grade stats |
-| gameData.searchMonsters(text, limit) | Local `Monsters` datacenter + French localization | Read-only name search, capped at 50 results |\n| gameData.getItem(id) | Local `Items` datacenter | Read-only item template, localized name/description, type, level, weight, flags, criteria, price and drop monster IDs |\n| gameData.searchItems(text, limit) | Local `Items` datacenter + French localization | Read-only item name search, capped at 50 results |
+| gameData.searchMonsters(text, limit) | Local `Monsters` datacenter + French localization | Read-only name search, capped at 50 results |\n| gameData.getItem(id) | Local `Items` datacenter | Read-only item template, localized name/description, type, level, weight, flags, criteria, price and drop monster IDs |\n| gameData.searchItems(text, limit) | Local `Items` datacenter + French localization | Read-only item name search, capped at 50 results |\n| gameData.getAchievement(id) | Local `Achievements` + `AchievementObjectives` datacenters | Read-only achievement metadata and ordered objective criteria; not account completion state |\n| gameData.searchAchievements(text, limit) | Local `Achievements` datacenter + French localization | Read-only achievement name search, capped at 50 results |
 | inventory.list() | Inventory.Items + datacenter templates | UID/GID/template ID/quantity/position/name/type/weight/level/equipped snapshot |
 | inventory.countItem(gid) | Inventory.Items quantity sum by template ID | Total quantity for a template ID |
 | inventory.equipItem(uid) | Guarded GameWorkflowService.EquipItem | Equips only into a compatible empty slot; never replaces existing gear; requires level |
@@ -43,7 +43,7 @@ These NYROX functions currently have no verified matching BubbleBot service/stat
 - `quest.getActiveQuests`, `getCompletedQuests`, `isQuestActive`, `isQuestCompleted`, `getCurrentStep`, `getQuestName`, `getQuestSteps`, `getObjectives`, `requestStepInfo`.
 - `npc.isInDialog`, `getQuestionText`, `getQuestionId`, `getResponseTexts`, `getResponses`, `npc`, `reply`, `leaveDialog`, `npcBank`.
 - `inventory` item effects are not fully exposed; complete equipment-effect scoring is unsupported. `inventory.list`, `countItem`, guarded `equipItem`, and guarded `useItemByGID` are implemented in this host.
-- `gameData.getDungeons`, `getDungeon`, `searchDungeons`, `getChallenges`, `getMapCells`, `getQuest`, `getAchievement` are not exposed by this BubbleBot host. Monster and item lookup are implemented separately via the local Unity datacenter. The supplied Unity reference documents the dungeon/challenge methods, but they still need a real data-service adapter. Quest/achievement static Game Data lookups are documented as stubs on Unity.
+- `gameData.getDungeons`, `getDungeon`, `searchDungeons`, `getChallenges`, `getMapCells`, `getQuest`, `getAchievement` are not exposed by this BubbleBot host. Monster, item and achievement metadata lookup are implemented via the local Unity datacenter. The supplied Unity reference documents the dungeon/challenge methods, but they still need a real data-service adapter. Quest/achievement static Game Data lookups are documented as stubs on Unity.
 - `map.npcs`, `getInteractives`, `interactiveObjects`, `monsterGroups`, `fightGroup`, `door`, `exitDungeon`, `waitForMapChange`.
 - `fight.getChallenges`, `getChallengeResult`.
 - `character.hpPercent`, `lifePoints`, `maxLifePoints`, `podsPercent`, `xp`.
@@ -82,6 +82,6 @@ The IDs are held in `GameRuntimeState`, so they are isolated per game client. Th
 - Explicit callback invocation: implemented through `InvokeLuaCallback(name, ...)`.
 - Disconnect cleanup: implemented.
 - MoonBot Unity subset: implemented as listed above.
-- Local static monster and item metadata: implemented as read-only `gameData.getMonster`, `searchMonsters`, `getItem` and `searchItems`; requires the Dofus Unity datacenter and French localization to have been initialized and loaded.
+- Local static monster, item and achievement metadata: implemented as read-only `gameData.getMonster`, `searchMonsters`, `getItem`, `searchItems`, `getAchievement` and `searchAchievements`; requires the Dofus Unity datacenter and French localization to have been initialized and loaded.
 - Full NYROX quest/dungeon engine compatibility: **not complete**. Missing quest-state, NPC/dialogue, dungeon metadata, monster-group, challenge-state and dungeon-transition APIs prevent the current NYROX engine from completing its intended workflow. Basic inventory snapshots/counting and guarded equip/use operations are implemented.
 - Live Dofus testing: not performed.
