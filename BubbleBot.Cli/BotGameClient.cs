@@ -813,6 +813,7 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
 
     /// <summary>In-memory packet payload capture; disabled by default and bounded.</summary>
     public PacketCaptureStore PacketCapture => _packetCaptureStore;
+    public QuestNpcEventStore QuestNpcEvents => _questNpcEvents;
 
     public void KoliRegister()
     {
