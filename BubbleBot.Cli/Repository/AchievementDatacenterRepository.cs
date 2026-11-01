@@ -17,7 +17,7 @@ internal static class AchievementDatacenterRepository
         catch (InvalidOperationException) { return null; }
     }
 
-    public static IReadOnlyList<Achievements> Search(string query, int limit)
+    public static IReadOnlyList<AchievementObjectives> GetObjectives(int achievementId)\n    {\n        try\n        {\n            return DatacenterService.Load<AchievementObjectives>().Values\n                .Where(objective => objective.AchievementId == achievementId)\n                .OrderBy(objective => objective.Order)\n                .ToArray();\n        }\n        catch (InvalidOperationException) { return []; }\n    }\n\n    public static IReadOnlyList<Achievements> Search(string query, int limit)
     {
         if (string.IsNullOrWhiteSpace(query) || limit <= 0) return [];
         try
