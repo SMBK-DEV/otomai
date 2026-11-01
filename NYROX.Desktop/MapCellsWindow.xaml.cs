@@ -45,14 +45,15 @@ public partial class MapCellsWindow : Window
             if (snapshot is null) { MapInfoText.Text = "No map data available."; return; }
             MapCellSnapshot.SetCurrentCell(snapshot.CurrentCell);
             CellsGrid.ItemsSource = new ObservableCollection<MapCellSnapshot>(snapshot.Cells.OrderBy(cell => cell.Id));
-            MapInfoText.Text = $"Account {_accountId} • Map {snapshot.MapId} • ({snapshot.PosX},{snapshot.PosY}) • Cell {snapshot.CurrentCell} • " +
-                $"Transitions: {(snapshot.Transitions.Length == 0 ? "none detected" : string.Join(", ", snapshot.Transitions))}" +
+            MapInfoText.Text = $"Account {_accountId} • Map {snapshot.MapId} • ({snapshot.PosX},{snapshot.PosY}) • Cell {snapshot.CurrentCell}" +
+                $"\\nAdjacent maps — N: {FormatMapId(snapshot.TopMapId)}  E: {FormatMapId(snapshot.RightMapId)}  S: {FormatMapId(snapshot.BottomMapId)}  W: {FormatMapId(snapshot.LeftMapId)}" +
+                $"\\nWorld-graph transitions: {(snapshot.Transitions.Length == 0 ? "none detected" : string.Join(", ", snapshot.Transitions))}" +
                 (snapshot.InFight ? " • IN FIGHT" : "");
             CellDetailsText.Text = $"Loaded {snapshot.Cells.Count} cells. Select a cell to inspect it.";
         }
         catch (Exception ex) { MapInfoText.Text = $"Map data unavailable: {ex.Message}"; }
     }
-    private async void Refresh_Click(object sender, RoutedEventArgs e) => await RefreshDataAsync();
+    private static string FormatMapId(long mapId) => mapId == 0 ? "—" : mapId.ToString();\n\n    private async void Refresh_Click(object sender, RoutedEventArgs e) => await RefreshDataAsync();
     private void Cell_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as Button)?.Tag is not MapCellSnapshot cell) return;
