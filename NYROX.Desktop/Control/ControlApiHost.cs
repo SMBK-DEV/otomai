@@ -97,6 +97,45 @@ internal sealed class ControlApiHost : IAsyncDisposable
             return Results.Ok(accounts);
         });
 
+        app.MapGet("/api/v1/accounts/{id}/game-interface", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            var inventory = client.Inventory;
+            var items = inventory.Items.Values
+                .Select(wrapper => new
+                {
+                    uid = wrapper.Item.Item.Uid,
+                    gid = wrapper.Item.Item.Gid,
+                    name = wrapper.Template?.Name ?? $"Item #{wrapper.Item.Item.Gid}",
+                    quantity = wrapper.Item.Item.Quantity,
+                    position = wrapper.Item.Position,
+                    favorite = wrapper.Item.Favorite,
+                    level = wrapper.Template?.Level ?? 0,
+                    iconId = wrapper.Template?.IconId ?? 0
+                })
+                .OrderBy(item => item.position == 63 ? 1 : 0)
+                .ThenBy(item => item.position)
+                .ThenBy(item => item.name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            var interfaceState = client.DofusInterfaceState.Snapshot(client.CharacterId);
+            return Results.Ok(new
+            {
+                accountId = id,
+                character = client.Info.Name,
+                connected = client.Connected,
+                characterId = client.CharacterId,
+                kamas = inventory.Kamas,
+                inventoryCount = items.Length,
+                inventory = items,
+                dialogue = interfaceState.Dialogue,
+                exchange = interfaceState.Exchange,
+                updatedAt = DateTimeOffset.UtcNow
+            });
+        });
+
         app.MapGet("/api/v1/accounts/{id}/map-cells", (string id) =>
         {
             if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
