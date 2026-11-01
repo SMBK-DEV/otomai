@@ -25,5 +25,8 @@ internal sealed class ControlApiClient : IDisposable
     public async Task<HttpResponseMessage> PostEmptyAsync(string path, CancellationToken cancellationToken = default) =>
         await _http.PostAsync(path, null, cancellationToken);
 
+    public async Task<HttpResponseMessage> DeleteAsync(string path, CancellationToken cancellationToken = default) =>
+        await _http.DeleteAsync(path, cancellationToken);
+
     public void Dispose() => _http.Dispose();
 }
