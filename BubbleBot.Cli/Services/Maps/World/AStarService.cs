@@ -22,6 +22,8 @@ public class AStarService
     private const int HeuristicScale = 1000;
     private const int IndoorWeight = 0;
     private const int MaxIteration = 10000;
+    private static readonly HashSet<string> CriterionWhitelist = new(StringComparer.Ordinal)
+        { "Ad", "DM", "MI", "Mk", "Oc", "Pc", "QF", "Qo", "Qs", "Sv" };
 
     public void Initialize()
     {
@@ -116,8 +118,6 @@ public class AStarService
 
     private bool HasValidTransition(WorldGraphEdge edge)
     {
-        var criterionWhiteList = new[] {"Ad", "DM", "MI", "Mk", "Oc", "Pc", "QF", "Qo", "Qs", "Sv"};
-
         var valid = false;
         
         foreach (var transition in edge.Transitions)
@@ -128,9 +128,10 @@ public class AStarService
                 break;
             }
             
-            if (!transition.Criterion.Contains("&") && 
-                !transition.Criterion.Contains("|") && 
-                !criterionWhiteList.Contains(transition.Criterion[..2]))
+            if (!transition.Criterion.Contains("&") &&
+                !transition.Criterion.Contains("|") &&
+                (transition.Criterion.Length < 2 ||
+                 !CriterionWhitelist.Contains(transition.Criterion[..2])))
             {
                 return false;
             }
