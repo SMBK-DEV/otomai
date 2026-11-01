@@ -60,6 +60,20 @@ internal sealed class ProfileStore
         catch (UnauthorizedAccessException) { return false; }
     }
 
+    public bool Delete(string? name)
+    {
+        if (!IsValidName(name)) return false;
+        try
+        {
+            var path = Path.Combine(_directory, name + ".json");
+            if (!File.Exists(path)) return false;
+            File.Delete(path);
+            return true;
+        }
+        catch (IOException) { return false; }
+        catch (UnauthorizedAccessException) { return false; }
+    }
+
     private static bool IsSafeScriptPath(string? relativePath)
     {
         if (string.IsNullOrWhiteSpace(relativePath) || relativePath.Length > 240 ||
