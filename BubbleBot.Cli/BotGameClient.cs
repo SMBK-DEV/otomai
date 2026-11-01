@@ -678,6 +678,16 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
         _workflowService.BoostStat(stat);
     }
 
+    public bool EquipItem(int objectUid)
+    {
+        return _workflowService.EquipItem(objectUid);
+    }
+
+    public bool UseItemByGid(int gid)
+    {
+        return _workflowService.UseItemByGid(gid);
+    }
+
     public void DoWork(bool noDelay = false)
     {
         _workflowService.DoWork(noDelay);
