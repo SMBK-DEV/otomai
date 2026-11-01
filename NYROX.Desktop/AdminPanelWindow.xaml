@@ -54,6 +54,7 @@
                 <TextBlock Text="Selected account" FontWeight="SemiBold" Margin="0,0,0,6"/>
                 <TextBlock x:Name="SelectedAccountText" Text="Select an account." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" Margin="0,0,0,12"/>
                 <Button Content="Open Map Cells" Click="OpenMapCells_Click"/>
+                <Button Content="Open Protocol Sniffer" Click="OpenProtocolSniffer_Click"/>
                 <Button Content="Stop scheduler" Click="StopScheduler_Click"/>
                 <Button Content="Stop Lua interpreter" Click="StopLua_Click"/>
                 <Button Content="Disconnect account" Click="Disconnect_Click"/>
