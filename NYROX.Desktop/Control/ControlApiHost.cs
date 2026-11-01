@@ -205,6 +205,18 @@ internal sealed class ControlApiHost : IAsyncDisposable
             return Results.Ok(new { saved = true, profile.Name });
         });
 
+        app.MapDelete("/api/v1/profiles/{name}", (string name) =>
+        {
+            if (!ProfileStore.IsValidName(name))
+                return Results.BadRequest(new { error = "Invalid profile name." });
+
+            if (!_profiles.Delete(name))
+                return Results.NotFound(new { error = "Profile does not exist or could not be deleted." });
+
+            _logs.Write("Warning", "Profiles", $"Profile deleted: {name}.");
+            return Results.Ok(new { deleted = true, name });
+        });
+
         app.MapGet("/api/v1/scheduler", () => Results.Ok(_scheduler.Status()));
 
         app.MapPost("/api/v1/accounts/{id}/scheduler/start", (string id, ScheduleStartRequest request) =>
