@@ -66,6 +66,7 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     private readonly ClientTransportService _transportService;
     private readonly ClientVerificationService _verificationService;
     private readonly GameMessageRouter _messageRouter;
+    private readonly object _luaScriptSync = new();
     private LuaScriptHost? _luaScriptHost;
     private string? _loadedLuaScriptPath;
     private GameRuntimeState State => _context.State;
@@ -525,6 +526,12 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
 
     public LuaScriptExecutionResult LoadLuaScriptFromFile(string relativePath)
     {
+        lock (_luaScriptSync)
+            return LoadLuaScriptFromFileCore(relativePath);
+    }
+
+    private LuaScriptExecutionResult LoadLuaScriptFromFileCore(string relativePath)
+    {
         ArgumentException.ThrowIfNullOrWhiteSpace(relativePath);
 
         var scriptsRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "Scripts"));
@@ -566,6 +573,8 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     /// <summary>Invokes a named callback in this account's loaded Lua script.</summary>
     public LuaScriptExecutionResult InvokeLuaCallback(string callbackName, params DynValue[] arguments)
     {
+        lock (_luaScriptSync)
+        {
         if (_luaScriptHost is null)
         {
             return LuaScriptExecutionResult.Failure(
@@ -573,28 +582,35 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
         }
 
         return _luaScriptHost.Invoke(callbackName, arguments);
+        }
     }
 
     /// <summary>Checks whether a Lua callback exists without executing it.</summary>
     public bool HasLuaCallback(string callbackName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(callbackName);
-        try
+        lock (_luaScriptSync)
         {
-            return _luaScriptHost?.GetGlobal(callbackName).Type == DataType.Function;
-        }
-        catch (ObjectDisposedException)
-        {
-            return false;
+            ArgumentException.ThrowIfNullOrWhiteSpace(callbackName);
+            try
+            {
+                return _luaScriptHost?.GetGlobal(callbackName).Type == DataType.Function;
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
         }
     }
 
     /// <summary>Stops and disposes this account's Lua interpreter.</summary>
     public void StopLuaScript()
     {
-        _luaScriptHost?.Dispose();
-        _luaScriptHost = null;
-        _loadedLuaScriptPath = null;
+        lock (_luaScriptSync)
+        {
+            _luaScriptHost?.Dispose();
+            _luaScriptHost = null;
+            _loadedLuaScriptPath = null;
+        }
     }
 
     protected override void OnConnected()
