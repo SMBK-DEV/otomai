@@ -93,9 +93,9 @@ The IDs are held in `GameRuntimeState`, so they are isolated per game client. Th
 
 ## NYROX protocol discovery diagnostics
 
-The game message router now records counts for otherwise-unhandled protocol message type names matching Quest, NPC, Dialog, Dungeon, Challenge or Achievement. Lua can inspect this through:
+The game message router records counts for all otherwise-unhandled protocol message type names (not only names matching English domain keywords, because generated protocol names may be abbreviated or opaque). Lua can inspect this through:
 
 - `nyrox.getObservedDomainProtocolEvents()` → array of `{ type, count }`.
-- `nyrox.protocolObservationScope()` → `current-session-unmapped-domain-event-types-only`.
+- `nyrox.protocolObservationScope()` → `current-session-unhandled-protocol-type-names-only`.
 
 This is a bounded diagnostic (maximum 100 distinct type names per client session). It deliberately stores no message payloads, does not decode unknown protocol messages, and does not represent active/completed quests or dialogue choices. It provides evidence to identify the next real protocol handlers without fabricating API responses.
