@@ -40,12 +40,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BubbleBot.Scripting", "Bubb
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BubbleBot.Scripting.Tests", "BubbleBot.Scripting.Tests\BubbleBot.Scripting.Tests.csproj", "{1B47B3E9-3A8C-4E95-9F5C-CC0A75F10A62}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NYROX.Desktop", "NYROX.Desktop\NYROX.Desktop.csproj", "{D7B56B0E-7A8C-4D83-9C18-8C8D0B91A6F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D7B56B0E-7A8C-4D83-9C18-8C8D0B91A6F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7B56B0E-7A8C-4D83-9C18-8C8D0B91A6F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7B56B0E-7A8C-4D83-9C18-8C8D0B91A6F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7B56B0E-7A8C-4D83-9C18-8C8D0B91A6F2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1B47B3E9-3A8C-4E95-9F5C-CC0A75F10A62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1B47B3E9-3A8C-4E95-9F5C-CC0A75F10A62}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1B47B3E9-3A8C-4E95-9F5C-CC0A75F10A62}.Release|Any CPU.ActiveCfg = Release|Any CPU
