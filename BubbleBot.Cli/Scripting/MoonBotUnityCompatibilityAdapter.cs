@@ -51,7 +51,20 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
             }
             return DynValue.NewTable(result);
         }));
-        t.Set("protocolObservationScope", Fn(() => DynValue.NewString("current-session-unhandled-protocol-type-names-only")));
+        t.Set("getObservedProtocolEvents", DynValue.NewCallback((_, _) =>
+        {
+            var result = new Table(script);
+            var index = 1;
+            foreach (var pair in _client.GetObservedProtocolEvents().OrderBy(x => x.Key, StringComparer.Ordinal))
+            {
+                var row = new Table(script);
+                row.Set("type", DynValue.NewString(pair.Key));
+                row.Set("count", DynValue.NewNumber(pair.Value));
+                result.Set(index++, DynValue.NewTable(row));
+            }
+            return DynValue.NewTable(result);
+        }));
+        t.Set("protocolObservationScope", Fn(() => DynValue.NewString("current-session-incoming-protocol-type-names-only")));
         return t;
     }
 
