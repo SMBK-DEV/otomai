@@ -15,6 +15,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\\BubbleBot.Scripting\\BubbleBot.Scripting.csproj" />
+    <ProjectReference Include="..\BubbleBot.Scripting\BubbleBot.Scripting.csproj" />
   </ItemGroup>
 </Project>
