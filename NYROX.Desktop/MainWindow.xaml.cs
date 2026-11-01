@@ -14,7 +14,12 @@ public partial class MainWindow : Window
     private readonly string _token;
     private readonly DispatcherTimer _refreshTimer;
     private bool _refreshing;
-    private const int AdminHotkeyId = 0x4E59;\n    private const int WmHotkey = 0x0312;\n    private const uint ModNoRepeat = 0x4000;\n    private const uint VkF10 = 0x79;\n    private HwndSource? _hotkeySource;\n    private AdminPanelWindow? _adminWindow;
+    private const int AdminHotkeyId = 0x4E59;
+    private const int WmHotkey = 0x0312;
+    private const uint ModNoRepeat = 0x4000;
+    private const uint VkF10 = 0x79;
+    private HwndSource? _hotkeySource;
+    private AdminPanelWindow? _adminWindow;
 
     public MainWindow(string token)
     {
@@ -33,6 +38,12 @@ public partial class MainWindow : Window
         Closed += (_, _) =>
         {
             _refreshTimer.Stop();
+            if (_hotkeySource is not null)
+            {
+                _hotkeySource.RemoveHook(HandleHotkey);
+                UnregisterHotKey(_hotkeySource.Handle, AdminHotkeyId);
+                _hotkeySource = null;
+            }
             _api.Dispose();
         };
     }
