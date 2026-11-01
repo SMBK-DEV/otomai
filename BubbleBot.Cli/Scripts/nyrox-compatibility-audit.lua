@@ -20,7 +20,13 @@ local checks = {
     {"inventory.equipItem", inventory, "equipItem"},
     {"inventory.useItemByGID", inventory, "useItemByGID"},
     {"gameData.getMonster", gameData, "getMonster"},
-    {"gameData.searchMonsters", gameData, "searchMonsters"},\n    {"gameData.getItem", gameData, "getItem"},\n    {"gameData.searchItems", gameData, "searchItems"},\n    {"gameData.getAchievement", gameData, "getAchievement"},\n    {"gameData.searchAchievements", gameData, "searchAchievements"},
+    {"gameData.searchMonsters", gameData, "searchMonsters"},
+    {"gameData.getItem", gameData, "getItem"},
+    {"gameData.searchItems", gameData, "searchItems"},
+    {"gameData.getAchievement", gameData, "getAchievement"},
+    {"gameData.searchAchievements", gameData, "searchAchievements"},
+    {"nyrox.getObservedDomainProtocolEvents", nyrox, "getObservedDomainProtocolEvents"},
+    {"nyrox.protocolObservationScope", nyrox, "protocolObservationScope"},
     {"fight.isInFight", fight, "isInFight"},
     {"bot.isFighting", bot, "isFighting"},
     {"global.isInFight", global, "isInFight"},
@@ -67,9 +73,10 @@ for _, name in ipairs(missing) do
     console.print("UNAVAILABLE (not emulated): ", name)
 end
 
--- Quest, NPC/dialogue and Game Data APIs are intentionally not installed in
--- this host. Absence is reported rather than returning fake empty success.
-console.print("Quest/NPC/Game Data APIs remain unavailable until backed by real services.")
+-- This diagnostic reports event type names only; it does not infer quest/dialogue state.
+local domainEvents = readOnlyCall(nyrox, "getObservedDomainProtocolEvents")
+console.print("Observed unmapped domain protocol event types=",
+    type(domainEvents) == "table" and #domainEvents or "unavailable")
 return {
     available = available,
     missing = missing,
@@ -79,5 +86,6 @@ return {
     level = level,
     kamas = kamas,
     inventoryCount = type(items) == "table" and #items or nil,
-    unixSeconds = now
+    unixSeconds = now,
+    observedDomainProtocolEvents = domainEvents
 }
