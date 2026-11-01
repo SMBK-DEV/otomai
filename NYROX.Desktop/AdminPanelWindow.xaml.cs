@@ -77,6 +77,18 @@ public partial class AdminPanelWindow : Window
         window.Show();
     }
 
+    private void OpenGameInterface_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedAccount is not { } account)
+        {
+            StatusText.Text = "Select an account first.";
+            return;
+        }
+
+        var window = new GameInterfaceWindow(_token, account.Id) { Owner = this };
+        window.Show();
+    }
+
     private void OpenMapCells_Click(object sender, RoutedEventArgs e)
     {
         if (SelectedAccount is not { } account)
