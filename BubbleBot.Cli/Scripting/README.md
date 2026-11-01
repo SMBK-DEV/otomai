@@ -21,4 +21,9 @@ HTTP request; it requires the host's datacenter initialization to have completed
 
 No DofusDB integration is included. Quest progress, live NPC dialogue, dungeon
 metadata, monster-group discovery, challenge state and dungeon transitions remain
-unavailable until backed by verified local data or actual protocol events.
+unavailable until backed by verified local data or decoded authoritative protocol events.
+
+The `nyrox` diagnostics expose bounded, payload-free counts of incoming protocol
+message type names (including messages handled by the client) and a separate list
+of unhandled type names. These are session observations only; they do not decode
+quest, dialogue, dungeon or challenge state.
