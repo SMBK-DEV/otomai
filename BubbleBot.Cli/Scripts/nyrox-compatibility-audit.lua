@@ -20,7 +20,7 @@ local checks = {
     {"inventory.equipItem", inventory, "equipItem"},
     {"inventory.useItemByGID", inventory, "useItemByGID"},
     {"gameData.getMonster", gameData, "getMonster"},
-    {"gameData.searchMonsters", gameData, "searchMonsters"},
+    {"gameData.searchMonsters", gameData, "searchMonsters"},\n    {"gameData.getItem", gameData, "getItem"},\n    {"gameData.searchItems", gameData, "searchItems"},
     {"fight.isInFight", fight, "isInFight"},
     {"bot.isFighting", bot, "isFighting"},
     {"global.isInFight", global, "isInFight"},
