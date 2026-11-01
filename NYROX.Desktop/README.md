@@ -80,3 +80,7 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 ## Security
 
 Do not commit account files, proxies, tokens, or game credentials. The local API is designed for same-user desktop control. Do not expose it through a reverse proxy or change the bind address without adding a deliberate remote-authentication model.
+
+### Quest & NPC event monitor
+
+The Protocol Sniffer includes a `Quest & NPC` tab showing the latest 100 verified quest/NPC protocol events and per-type counts for the current account session. The authenticated local endpoint is `GET /api/v1/accounts/{id}/quest-npc-events`. It stores bounded numeric/enum schema diagnostics in memory only; free-form strings and byte payloads are omitted. Some generated schema labels are obfuscated, so the UI deliberately does not claim semantic meanings for them. This observer does not advance quests, answer NPC dialogs, or automate dungeons.
