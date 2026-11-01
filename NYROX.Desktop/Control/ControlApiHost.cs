@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using BubbleBot.Cli;
+using BubbleBot.Cli.Repository.Maps;
 using BubbleBot.Cli.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -93,6 +94,65 @@ internal sealed class ControlApiHost : IAsyncDisposable
             }).OrderBy(x => x.id).ToArray();
 
             return Results.Ok(accounts);
+        });
+
+        app.MapGet("/api/v1/accounts/{id}/map-cells", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            var map = client.Map;
+            if (map is null)
+                return Results.Conflict(new { error = "The account has no active map snapshot yet." });
+
+            var interactiveByCell = map.GetInteractiveElements()
+                .Select(element => new
+                {
+                    ElementId = element.ElementId,
+                    CellId = map.Data.GetInteractive(element.ElementId)?.CellId
+                })
+                .Where(element => element.CellId.HasValue)
+                .GroupBy(element => element.CellId!.Value)
+                .ToDictionary(group => group.Key, group => group.Select(element => element.ElementId).ToArray());
+
+            var occupiedCells = map.GetActors().Values
+                .Select(actor => actor.Disposition.CellId)
+                .ToHashSet();
+
+            var cells = map.Data.Cells.Select(cell =>
+            {
+                var point = MapPoint.GetPoint(cell.Id);
+                interactiveByCell.TryGetValue(cell.Id, out var elementIds);
+                return new
+                {
+                    id = cell.Id,
+                    x = point?.X ?? 0,
+                    y = point?.Y ?? 0,
+                    visible = cell.Visible,
+                    walkable = cell.Mov,
+                    lineOfSight = cell.Los,
+                    walkableDuringFight = !cell.NonWalkableDuringFight,
+                    farmCell = cell.FarmCell,
+                    floor = cell.Floor,
+                    mapChangeData = cell.MapChangeData,
+                    arrow = cell.Arrow,
+                    interactive = elementIds is { Length: > 0 },
+                    interactiveElementIds = elementIds ?? Array.Empty<int>(),
+                    occupied = occupiedCells.Contains(cell.Id)
+                };
+            }).ToArray();
+
+            return Results.Ok(new
+            {
+                accountId = id,
+                mapId = map.Id,
+                posX = map.Data.PosX,
+                posY = map.Data.PosY,
+                currentCell = client.Info.CellId,
+                inFight = client.IsInFight,
+                transitions = map.GetTransitions().Select(direction => direction.ToString().ToLowerInvariant()).ToArray(),
+                cells
+            });
         });
 
         app.MapGet("/api/v1/game-data/{category}", (string category, string? q, int? limit) =>
