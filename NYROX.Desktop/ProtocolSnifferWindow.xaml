@@ -49,6 +49,8 @@
                             BorderThickness="1" CornerRadius="5" Padding="10">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="SELECTED PAYLOAD • HEX" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <Button DockPanel.Dock="Top" Content="Decode generated fields" Click="DecodeSelected_Click"
+                                    HorizontalAlignment="Left" Margin="0,0,0,8" Padding="10,5"/>
                             <TextBox x:Name="PayloadDetailText" IsReadOnly="True" AcceptsReturn="True"
                                      TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
                                      FontFamily="Consolas" FontSize="12" Background="#0B1017"
