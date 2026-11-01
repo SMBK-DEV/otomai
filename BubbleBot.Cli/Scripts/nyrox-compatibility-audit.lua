@@ -19,6 +19,9 @@ local checks = {
     {"inventory.countItem", inventory, "countItem"},
     {"inventory.equipItem", inventory, "equipItem"},
     {"inventory.useItemByGID", inventory, "useItemByGID"},
+    {"success.getObservedCompletedAchievements", success, "getObservedCompletedAchievements"},
+    {"success.wasObservedCompleted", success, "wasObservedCompleted"},
+    {"success.observationScope", success, "observationScope"},
     {"gameData.getMonster", gameData, "getMonster"},
     {"gameData.searchMonsters", gameData, "searchMonsters"},
     {"gameData.getItem", gameData, "getItem"},
@@ -62,6 +65,8 @@ local level = readOnlyCall(character, "level")
 local kamas = readOnlyCall(character, "kamas")
 local items = readOnlyCall(inventory, "list")
 local now = readOnlyCall(global, "getTime")
+local completedAchievements = readOnlyCall(success, "getObservedCompletedAchievements")
+local achievementScope = readOnlyCall(success, "observationScope")
 
 console.print("NYROX API audit: available=", #available, " missing=", #missing)
 console.print("Read-only snapshot: map=", mapId, " coords=", coords,
@@ -87,5 +92,7 @@ return {
     kamas = kamas,
     inventoryCount = type(items) == "table" and #items or nil,
     unixSeconds = now,
-    observedDomainProtocolEvents = domainEvents
+    observedDomainProtocolEvents = domainEvents,
+    observedCompletedAchievements = completedAchievements,
+    achievementObservationScope = achievementScope
 }
