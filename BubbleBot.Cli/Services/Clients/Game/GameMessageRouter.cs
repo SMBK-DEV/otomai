@@ -64,6 +64,7 @@ internal sealed class GameMessageRouter : IClientMessageRouter
         _notifications = notifications;
         _handlers =
         [
+            new DofusInterfaceObserverHandler(owner.DofusInterfaceState),
             new GameSessionSystemHandler(context,
                                          transportService,
                                          notifications,
