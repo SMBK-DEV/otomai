@@ -240,14 +240,20 @@ internal sealed class ControlApiHost : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        if (_app is not null)
+            await _app.StopAsync();
+
         foreach (var subscription in _logSubscriptions.Values)
             subscription.Client.DesktopLog -= subscription.Handler;
         _logSubscriptions.Clear();
+
         await _scheduler.DisposeAsync();
-        if (_app is null) return;
-        await _app.StopAsync();
-        await _app.DisposeAsync();
-        _app = null;
+
+        if (_app is not null)
+        {
+            await _app.DisposeAsync();
+            _app = null;
+        }
     }
 
     internal sealed record ScriptLoadRequest(string Path);
