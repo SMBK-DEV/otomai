@@ -164,6 +164,12 @@ public partial class OperationsCenterWindow : Window
         catch (Exception ex) { StatusText.Text = "Runtime API unavailable: " + ex.Message; }
     }
     private async void RefreshRuntime_Click(object sender, RoutedEventArgs e) => await RefreshRuntimeAsync();
+    private void OpenController_Click(object sender, RoutedEventArgs e)
+    {
+        var w = new ControllerWindow(_token) { Owner = this };
+        w.Show();
+    }
+
     private void OpenAdmin_Click(object sender, RoutedEventArgs e)
     {
         var w = new AdminPanelWindow(_token) { Owner = this }; w.Show();
