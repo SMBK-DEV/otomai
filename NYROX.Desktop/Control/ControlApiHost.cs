@@ -193,6 +193,19 @@ internal sealed class ControlApiHost : IAsyncDisposable
             });
         });
 
+        app.MapGet("/api/v1/accounts/{id}/protocol-routing", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            return Results.Ok(new
+            {
+                accountId = id,
+                scope = "current-session-incoming-message-to-consuming-handler",
+                routes = client.GetObservedProtocolRoutes()
+            });
+        });
+
         app.MapGet("/api/v1/accounts/{id}/packet-capture", (string id) =>
         {
             if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
