@@ -94,8 +94,13 @@ internal sealed class BubbleBotRuntimeAdapter : ILuaApiAdapter
         var table = new Table(script);
         table.Set("print", DynValue.NewCallback((_, args) =>
         {
-            var message = string.Join(" ", args.Select(x =>
-                x.Type == DataType.Nil ? "nil" : x.ToPrintString()));
+            var parts = new List<string>(args.Count);
+            for (var i = 0; i < args.Count; i++)
+            {
+                var value = args[i];
+                parts.Add(value.Type == DataType.Nil ? "nil" : value.ToPrintString());
+            }
+            var message = string.Join(" ", parts);
             _client.LogInfo("[LUA] {Message}", message);
             return DynValue.Nil;
         }));
