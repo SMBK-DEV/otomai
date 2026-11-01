@@ -102,6 +102,7 @@ public static class DesktopMapRouteCatalog
 
     private sealed class MapRouteRecord
     {
+        public MapRouteRecord() { }
         public long Id { get; set; }
         public long TopNeighbourId { get; set; }
         public long BottomNeighbourId { get; set; }
