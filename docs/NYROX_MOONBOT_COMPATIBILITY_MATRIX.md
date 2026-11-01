@@ -63,6 +63,16 @@ The adapter exposes a deliberately non-MoonBot extension namespace `success`:
 
 This is not a full account achievement journal: IDs are not persisted across reconnects, and no static achievement-name mapping is implied. The data is sourced from actual server events, never guessed from local quest/dungeon catalogues.
 
+## Achievement observation API
+
+The Lua adapter now registers a `success` namespace backed by the real achievement protocol events already handled by `GameSessionSystemHandler`:
+
+- `success.getObservedCompletedAchievements()` returns achievement IDs observed from server events in the current client session.
+- `success.wasObservedCompleted(id)` checks that session-scoped set.
+- `success.observationScope()` returns `current-session-server-events-only`.
+
+The IDs are held in `GameRuntimeState`, so they are isolated per game client. They are not persisted across reconnects and do not represent a complete historical account achievement list.
+
 ## Current readiness
 
 - Lua interpreter and per-account host: implemented.
