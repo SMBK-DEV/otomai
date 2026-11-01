@@ -11,16 +11,19 @@ internal sealed class ClientTransportService
     private IClientMessageRouter? _router;
     private readonly Contracts.IClientLogger _logger;
     private readonly Func<byte[], bool> _sendAsync;
+    private readonly PacketCaptureStore _packetCapture;
 
     public ClientTransportService(BotClientContextBase           context,
                                   Contracts.IClientLogger        logger,
                                   Func<byte[], bool>             sendAsync,
-                                  IClientMessageRouter?          router = null)
+                                  IClientMessageRouter?          router = null,
+                                  PacketCaptureStore?             packetCapture = null)
     {
         _context = context;
         _logger = logger;
         _sendAsync = sendAsync;
         _router = router;
+        _packetCapture = packetCapture ?? new PacketCaptureStore();
     }
 
     public void AttachRouter(IClientMessageRouter router)
@@ -85,6 +88,7 @@ internal sealed class ClientTransportService
                 _ => null
             };
 
+            _packetCapture.TryCapture("incoming", typeName, content);
             var type = typeName.GetLastSegment('/');
             var data = MessageFactory.Create(type, content);
             var typeFullName = ProtoService.Instance.GetMapping(type);
@@ -214,6 +218,8 @@ internal sealed class ClientTransportService
 
         using var bodyStream = new MemoryStream();
         Serializer.Serialize(bodyStream, message);
+        var payload = bodyStream.ToArray();
+        _packetCapture.TryCapture("outgoing", typeUrl, payload);
 
         var request = new GameMessage
         {
@@ -223,7 +229,7 @@ internal sealed class ClientTransportService
                 Content = new Any
                 {
                     TypeUrl = $"type.ankama.com/{typeUrl}",
-                    Value = bodyStream.ToArray()
+                    Value = payload
                 }
             },
             ResponseFake = null
