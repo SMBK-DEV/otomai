@@ -559,6 +559,20 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
         return _luaScriptHost.Invoke(callbackName, arguments);
     }
 
+    /// <summary>Checks whether a Lua callback exists without executing it.</summary>
+    public bool HasLuaCallback(string callbackName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(callbackName);
+        try
+        {
+            return _luaScriptHost?.GetGlobal(callbackName).Type == DataType.Function;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>Stops and disposes this account's Lua interpreter.</summary>
     public void StopLuaScript()
     {
