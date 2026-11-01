@@ -127,15 +127,18 @@ internal sealed class GameSessionSystemHandler : GameClientServiceBase, IGameMes
                             _lastReqUid);
                 return true;
             case AchievementFinishedEvent achievementFinishedEvent:
+                Client.RecordObservedCompletedAchievement(achievementFinishedEvent.Achievement.AchievementId);
                 LogInfo("Succès débloqué {AchievementId}", achievementFinishedEvent.Achievement.AchievementId);
                 return true;
             case AchievementFinishedInformationEvent achievementFinishedInformationEvent:
+                Client.RecordObservedCompletedAchievement(achievementFinishedInformationEvent.Achievement.AchievementId);
                 LogInfo("Succès débloqué {AchievementId}",
                         achievementFinishedInformationEvent.Achievement.AchievementId);
                 return true;
             case AchievementsEvent achievementsEvent:
                 foreach (var achievement in achievementsEvent.AchievedAchievements)
                 {
+                    Client.RecordObservedCompletedAchievement(achievement.AchievementId);
                     LogInfo("Succès débloqué {AchievementId}", achievement.AchievementId);
                 }
 
