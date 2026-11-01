@@ -67,6 +67,7 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     private readonly ClientVerificationService _verificationService;
     private readonly GameMessageRouter _messageRouter;
     private LuaScriptHost? _luaScriptHost;
+    private string? _loadedLuaScriptPath;
     private GameRuntimeState State => _context.State;
 
     public BotGameClient(
@@ -511,6 +512,8 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     /// Loads a reviewed Lua script from the Scripts directory for this account.
     /// Each BotGameClient owns its own interpreter and global environment.
     /// </summary>
+    public string? LoadedLuaScriptPath => _loadedLuaScriptPath;
+
     public LuaScriptExecutionResult LoadLuaScriptFromFile(string relativePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(relativePath);
@@ -542,6 +545,10 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
         if (!result.Succeeded)
         {
             StopLuaScript();
+        }
+        else
+        {
+            _loadedLuaScriptPath = relativePath.Replace('\\', '/');
         }
 
         return result;
@@ -578,6 +585,7 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     {
         _luaScriptHost?.Dispose();
         _luaScriptHost = null;
+        _loadedLuaScriptPath = null;
     }
 
     protected override void OnConnected()
