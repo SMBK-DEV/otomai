@@ -11,6 +11,7 @@
       <ProjectReference Include="..\libs\Bubble.Core\Bubble.Core.csproj" />
       <ProjectReference Include="..\libs\Bubble.DamageCalculation\Bubble.DamageCalculation.csproj" />
       <ProjectReference Include="..\libs\Bubble.Shared\Bubble.Shared.csproj" />
+      <ProjectReference Include="..\BubbleBot.Scripting\BubbleBot.Scripting.csproj" />
     </ItemGroup>
 
     <ItemGroup>
