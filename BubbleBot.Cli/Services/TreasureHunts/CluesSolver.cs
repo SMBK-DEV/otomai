@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using Bubble.Core.Datacenter;
 using Bubble.Core.Datacenter.Datacenter.Quest.TreasureHunt;
@@ -16,44 +17,26 @@ public class CluesSolver : Singleton<CluesSolver>
 
     public static string RemoveAccents(string str)
     {
-        Dictionary<char, char> replacements = new()
+        if (string.IsNullOrWhiteSpace(str))
         {
-            { 'à', 'a' },
-            { 'ç', 'c' },
-            { 'é', 'e' },
-            { 'è', 'e' },
-            { 'ê', 'e' },
-            { 'ë', 'e' },
-            { 'ô', 'o' },
-            { 'û', 'u' },
-            { 'ù', 'u' }
-        };
+            return string.Empty;
+        }
 
-        Dictionary<char, string> strReplacements = new()
+        var normalized = str.Normalize(NormalizationForm.FormD);
+        StringBuilder stringBuilder = new(normalized.Length);
+
+        foreach (var character in normalized)
         {
-            { 'œ', "oe" },
-            { 'Œ', "Oe" }
-        };
-
-        StringBuilder stringBuilder = new();
-
-        foreach (char c in str)
-        {
-            if (replacements.TryGetValue(c, out char r))
+            if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
             {
-                stringBuilder.Append(r);
-            }
-            else if (strReplacements.TryGetValue(c, out var s))
-            {
-                stringBuilder.Append(s);
-            }
-            else
-            {
-                stringBuilder.Append(c);
+                stringBuilder.Append(character);
             }
         }
 
-        return stringBuilder.ToString();
+        return stringBuilder.ToString()
+                            .Replace("œ", "oe", StringComparison.OrdinalIgnoreCase)
+                            .Normalize(NormalizationForm.FormC)
+                            .Trim();
     }
 
     public async Task Initialize()
@@ -68,27 +51,64 @@ public class CluesSolver : Singleton<CluesSolver>
         
         var cluesLocal = await File.ReadAllTextAsync("Data/dofuspourlesnoobs_clues.json");
         
-        var clues = JsonSerializer.Deserialize<DofusPourLesNoobsFile>(cluesLocal);
-        
-        var cluesMapping = new Dictionary<int, int>();
-        foreach (var clue in clues!.Clues)
-        {
-            var gameClue = cluesInGame.Values.FirstOrDefault(x
-                                                                 => string.Equals(RemoveAccents(x.Name), RemoveAccents(clue.HintFr), StringComparison.CurrentCultureIgnoreCase));
+        var clues = JsonSerializer.Deserialize<DofusPourLesNoobsFile>(cluesLocal)
+                    ?? throw new InvalidDataException("Unable to deserialize local treasure hunt clues.");
 
-            if (gameClue == null)
+        // Only map a localized hint when its normalized name identifies exactly one game POI.
+        // Ambiguous or unknown names must never fall back to an unrelated external clue ID.
+        var gameCluesByName = cluesInGame.Values
+                                         .GroupBy(x => RemoveAccents(x.Name), StringComparer.OrdinalIgnoreCase)
+                                         .ToDictionary(x => x.Key, x => x.ToList(), StringComparer.OrdinalIgnoreCase);
+
+        var cluesMapping = new Dictionary<int, int>();
+        var unmatchedClueNames = 0;
+        var ambiguousClueNames = 0;
+
+        foreach (var clue in clues.Clues)
+        {
+            var normalizedName = RemoveAccents(clue.HintFr);
+            if (!gameCluesByName.TryGetValue(normalizedName, out var matchingGameClues))
             {
+                unmatchedClueNames++;
                 continue;
             }
-            
-            cluesMapping[clue.ClueId] = gameClue.Id;
+
+            if (matchingGameClues.Count != 1)
+            {
+                ambiguousClueNames++;
+                continue;
+            }
+
+            cluesMapping[clue.ClueId] = matchingGameClues[0].Id;
         }
 
+        var droppedMapClueReferences = 0;
         foreach (var map in clues.Maps)
         {
-            map.Clues = map.Clues.Select(x => cluesMapping.TryGetValue(x, out var v) ? v : x).ToList();
+            var mappedClues = new List<int>(map.Clues.Count);
+            foreach (var sourceClueId in map.Clues)
+            {
+                if (cluesMapping.TryGetValue(sourceClueId, out var gameClueId))
+                {
+                    mappedClues.Add(gameClueId);
+                }
+                else
+                {
+                    droppedMapClueReferences++;
+                }
+            }
+
+            map.Clues = mappedClues.Distinct().ToList();
         }
-        
+
+        Log.Information(
+            "Loaded local treasure clues: {Mapped}/{Total} clue names mapped, {Unmatched} unmatched, {Ambiguous} ambiguous, {DroppedReferences} map references excluded",
+            cluesMapping.Count,
+            clues.Clues.Count,
+            unmatchedClueNames,
+            ambiguousClueNames,
+            droppedMapClueReferences);
+
         _clues = clues;
     }
 
