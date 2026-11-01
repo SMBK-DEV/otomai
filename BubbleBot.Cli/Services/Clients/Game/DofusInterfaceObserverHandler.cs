@@ -12,7 +12,8 @@ internal sealed class DofusInterfaceObserverHandler(DofusInterfaceStateStore sta
     {
         if (message is NpcDialogCreationEvent or NpcDialogQuestionEvent or DialogLeaveEvent or
             ExchangeRequestedTradeEvent or ExchangeStartedEvent or ExchangeStartedWithPodsEvent or
-            ExchangeObjectsAddedEvent or ExchangeReadyEvent or ExchangeLeaveEvent)
+            ExchangeObjectsAddedEvent or ExchangeObjectsModifiedEvent or ExchangeObjectsRemovedEvent or
+            ExchangeObjectRemovedEvent or ExchangeReadyEvent or ExchangeLeaveEvent)
         {
             state.Observe(message);
         }
