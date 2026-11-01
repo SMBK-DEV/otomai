@@ -45,4 +45,10 @@
       <Folder Include="Services\TreasureHunts\Models\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="Scripts\\**\\*.lua">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
