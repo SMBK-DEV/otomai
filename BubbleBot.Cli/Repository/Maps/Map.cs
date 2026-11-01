@@ -121,91 +121,49 @@ public class Map
     
     public string GetClosestZaap()
     {
-        var zaaps = MapRepository.Instance.GetWayPoints();
-        
-        var mapScores = new Dictionary<long, int>();
-        foreach (var destination in zaaps)
-        {
-            var map = MapRepository.Instance.GetMap(destination.MapId);
-            if (map == null)
-                continue;
-            
-            var subArea = MapRepository.Instance.GetSubArea(map.SubAreaId);
-            if (subArea?.AreaId == 45)
-            {
-                continue;
-            }     
-            
-            if (map.Id == 179831296)
-            {
-                continue;
-            }
-
-            if (map.WorldMap > 1)
-                continue;
-
-            
-            var x = map?.PosX ?? 0;
-            var y = map?.PosY ?? 0;
-
-            // get the distance between the current map and the destination
-            var distance =
-                (int)Math.Sqrt(Math.Pow(Data.PosX - x, 2) + 
-                               Math.Pow(Data.PosY - y, 2));
-
-            mapScores[destination.MapId] = distance;
-        }
-        
-        var closestMap = mapScores.MinBy(x => x.Value).Key;
-        var closestMapData = MapRepository.Instance.GetMap(closestMap);
-        
-        if (closestMapData == null)
+        var closestMapId = GetClosestZaapMapId();
+        if (closestMapId is null)
             return "Aucun zaap trouvé";
-        
-        var subAreas = MapRepository.Instance.GetSubArea(closestMapData!.SubAreaId);
-        return $"{subAreas!.Name} - ({closestMapData.PosX}, {closestMapData.PosY})";
+
+        var closestMapData = MapRepository.Instance.GetMap(closestMapId.Value);
+        if (closestMapData is null)
+            return "Aucun zaap trouvé";
+
+        var subArea = MapRepository.Instance.GetSubArea(closestMapData.SubAreaId);
+        return subArea is null
+            ? "Aucun zaap trouvé"
+            : $"{subArea.Name} - ({closestMapData.PosX}, {closestMapData.PosY})";
     }
 
-    public long GetClosestZaapId()
+    public long GetClosestZaapId() => GetClosestZaapMapId() ?? 0;
+
+    private long? GetClosestZaapMapId()
     {
-        var zaaps = MapRepository.Instance.GetWayPoints();
-        
-        var mapScores = new Dictionary<long, int>();
-        foreach (var destination in zaaps)
-        {
-            var map = MapRepository.Instance.GetMap(destination.MapId);
-            if (map == null)
-                continue;
-            
-            var subArea = MapRepository.Instance.GetSubArea(map.SubAreaId);
-            if (subArea?.AreaId == 45)
+        // Keep both public helpers on exactly the same candidate set. The old
+        // ID-only helper did not exclude non-world-map waypoints, so it could
+        // disagree with GetClosestZaap() and send callers to an invalid target.
+        var candidates = MapRepository.Instance.GetWayPoints()
+            .Select(waypoint => MapRepository.Instance.GetMap(waypoint.MapId))
+            .Where(map => map is not null)
+            .Select(map => map!)
+            .Where(map =>
             {
-                continue;
-            }
-
-            if (map.Id == 179831296)
+                var subArea = MapRepository.Instance.GetSubArea(map.SubAreaId);
+                return subArea?.AreaId != 45 &&
+                       map.Id != 179831296 &&
+                       map.WorldMap <= 1;
+            })
+            .Select(map => new
             {
-                continue;
-            }
-            
-            var x = map?.PosX ?? 0;
-            var y = map?.PosY ?? 0;
+                MapId = map.Id,
+                DistanceSquared = Math.Pow(Data.PosX - map.PosX, 2) +
+                                  Math.Pow(Data.PosY - map.PosY, 2)
+            })
+            .OrderBy(candidate => candidate.DistanceSquared)
+            .ThenBy(candidate => candidate.MapId)
+            .ToList();
 
-            // get the distance between the current map and the destination
-            var distance =
-                (int)Math.Sqrt(Math.Pow(Data.PosX - x, 2) + 
-                               Math.Pow(Data.PosY - y, 2));
-
-            mapScores[destination.MapId] = distance;
-        }
-        
-        var closestMap = mapScores.MinBy(x => x.Value).Key;
-        var closestMapData = MapRepository.Instance.GetMap(closestMap);
-        
-        if (closestMapData == null)
-            return 0;
-
-        return closestMap;
+        return candidates.Count == 0 ? null : candidates[0].MapId;
     }
 
     public void GoToMap(int x, int y)
