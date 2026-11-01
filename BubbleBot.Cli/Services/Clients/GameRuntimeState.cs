@@ -82,4 +82,6 @@ internal sealed class GameRuntimeState
     public bool IsKoliReady { get; set; }
     public bool IsTrajetReady { get; set; }
     public bool IsWaitingPartyMembers { get; set; }
+    // Achievement IDs confirmed by server events during this client session.
+    public HashSet<int> ObservedCompletedAchievementIds { get; } = [];
 }
