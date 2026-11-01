@@ -26,6 +26,8 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 - Profiles store a Lua path, callback name and interval (1000-60000ms).
 - Explicit per-account scheduler start/stop. A profile must match the script currently loaded on that account and the callback must exist.
 - Recent desktop-control, scheduler, and per-account runtime log message templates. The runtime logger stream deliberately omits structured property values to avoid exposing account/session data.
+- Read-only Game Data Explorer for local item, monster and achievement datacenters (search capped at 50 results).
+- Extended account selection and confirmed bulk scheduler start/stop for selected accounts.
 - Three-second refresh of accounts, profiles, scheduler count and recent logs.
 
 ## Scheduler behaviour and safety
@@ -51,7 +53,7 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 - Account connection uses the existing local Zaap/BubbleBot account configuration. It does not create or alter Ankama credentials.
 - A connection request being accepted is not proof that the game session completed login. The live account list is authoritative for current process state.
 - The desktop app uses the existing `BotManager` and `BotGameClient` runtime from the CLI assembly; it does not start a second game engine.
-- Task/route editor, quest/dungeon workflow management, full game-data explorer, installer/updater and in-game admin overlay remain future work.
+- Route editor, quest/dungeon workflow management, installer/updater and in-game admin overlay remain future work.
 - No live game scripts are started automatically at application launch.
 
 ## Security
