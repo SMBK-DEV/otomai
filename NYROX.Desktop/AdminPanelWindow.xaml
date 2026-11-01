@@ -39,7 +39,7 @@
                     <DataGrid x:Name="AccountsGrid" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
                               SelectionMode="Single" Background="#0D141C" Foreground="{StaticResource TextPrimary}"
                               RowBackground="#111A24" AlternatingRowBackground="#14202B" BorderBrush="{StaticResource PanelBorder}"
-                              GridLinesVisibility="Horizontal" HeadersVisibility="Column">
+                              GridLinesVisibility="Horizontal" HeadersVisibility="Column" SelectionChanged="AccountsGrid_SelectionChanged">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Account" Binding="{Binding Id}" Width="1.2*"/>
                             <DataGridTextColumn Header="Character" Binding="{Binding Character}" Width="1.1*"/>
