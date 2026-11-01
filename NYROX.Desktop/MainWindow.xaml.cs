@@ -46,12 +46,13 @@ public partial class MainWindow : Window
             var scripts = await _api.GetAsync<List<string>>("api/v1/scripts") ?? [];
             var profiles = await _api.GetAsync<List<ProfileInfo>>("api/v1/profiles") ?? [];
             var logs = await _api.GetAsync<List<ControlLogInfo>>("api/v1/logs?limit=60") ?? [];
-            var selectedAccountId = SelectedAccount?.Id;
+            var selectedAccountIds = AccountsGrid.SelectedItems.Cast<AccountStatus>()
+                .Select(x => x.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var selectedProfileName = (ProfileCombo.SelectedItem as ProfileInfo)?.Name;
 
             AccountsGrid.ItemsSource = accounts;
-            if (selectedAccountId is not null)
-                AccountsGrid.SelectedItem = accounts.FirstOrDefault(x => x.Id == selectedAccountId);
+            foreach (var account in accounts.Where(x => selectedAccountIds.Contains(x.Id)))
+                AccountsGrid.SelectedItems.Add(account);
 
             AccountCountText.Text = accounts.Count.ToString();
             ConnectedCountText.Text = accounts.Count(x => x.Connected).ToString();
