@@ -167,6 +167,32 @@ internal sealed class ControlApiHost : IAsyncDisposable
             });
         });
 
+        app.MapGet("/api/v1/accounts/{id}/protocol-observer", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            var incoming = client.GetObservedProtocolEvents()
+                .OrderByDescending(pair => pair.Value)
+                .ThenBy(pair => pair.Key, StringComparer.Ordinal)
+                .Select(pair => new ProtocolEventSnapshot(pair.Key, pair.Value))
+                .ToArray();
+            var unhandled = client.GetObservedUnmappedDomainEvents()
+                .OrderByDescending(pair => pair.Value)
+                .ThenBy(pair => pair.Key, StringComparer.Ordinal)
+                .Select(pair => new ProtocolEventSnapshot(pair.Key, pair.Value))
+                .ToArray();
+
+            return Results.Ok(new
+            {
+                accountId = id,
+                scope = "current-session-incoming-protocol-type-names-only",
+                payloadCapture = false,
+                incoming,
+                unhandled
+            });
+        });
+
         app.MapGet("/api/v1/game-data/{category}", (string category, string? q, int? limit) =>
         {
             if (category is not ("items" or "monsters" or "achievements"))
@@ -364,6 +390,7 @@ internal sealed class ControlApiHost : IAsyncDisposable
         }
     }
 
+    internal sealed record ProtocolEventSnapshot(string Type, int Count);
     internal sealed record ScriptLoadRequest(string Path);
     internal sealed record ConnectAccountRequest(string Username);
     internal sealed record ScheduleStartRequest(string Profile);
