@@ -77,6 +77,26 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
             ? DynValue.Nil
             : DynValue.NewString($"{_client.Map.Data.PosX},{_client.Map.Data.PosY}")));
         t.Set("currentCell", Fn(() => DynValue.NewNumber(_client.Info.CellId)));
+        t.Set("getCells", DynValue.NewCallback((_, _) =>
+        {
+            var result = new Table(script);
+            var map = _client.Map;
+            if (map is null) return DynValue.NewTable(result);
+
+            var index = 1;
+            foreach (var cell in map.Data.Cells.OrderBy(cell => cell.Id))
+                result.Set(index++, DynValue.NewTable(CreateCellSnapshot(script, map, cell)));
+            return DynValue.NewTable(result);
+        }));
+        t.Set("getCell", DynValue.NewCallback((_, args) =>
+        {
+            if (!TryGetNumber(args, 0, out var cellId) || cellId < 0 || cellId >= MapConstants.MapSize ||
+                _client.Map is not { } map)
+                return DynValue.Nil;
+
+            var cell = map.Data.GetCell((int)cellId);
+            return cell is null ? DynValue.Nil : DynValue.NewTable(CreateCellSnapshot(script, map, cell));
+        }));
         t.Set("moveTowardMap", DynValue.NewCallback((_, args) =>
         {
             if (!TryGetNumber(args, 0, out var mapId) || _client.Map is null || !_client.Connected)
@@ -139,6 +159,36 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
         // route service is graph based, and the supplied MoonBot Unity docs
         // identify worldDistance as an unimplemented zero-valued stub.
         return t;
+    }
+
+    private static Table CreateCellSnapshot(Script script, BubbleBot.Cli.Repository.Maps.Map map, Cell cell)
+    {
+        var row = new Table(script);
+        var point = MapPoint.GetPoint(cell.Id);
+        var interactiveIds = map.GetInteractiveElements()
+            .Where(element => map.Data.GetInteractive(element.ElementId)?.CellId == cell.Id)
+            .Select(element => element.ElementId)
+            .Distinct()
+            .ToArray();
+        var interactive = new Table(script);
+        for (var index = 0; index < interactiveIds.Length; index++)
+            interactive.Set(index + 1, DynValue.NewNumber(interactiveIds[index]));
+
+        row.Set("id", DynValue.NewNumber(cell.Id));
+        row.Set("x", DynValue.NewNumber(point?.X ?? 0));
+        row.Set("y", DynValue.NewNumber(point?.Y ?? 0));
+        row.Set("visible", DynValue.NewBoolean(cell.Visible));
+        row.Set("walkable", DynValue.NewBoolean(cell.Mov));
+        row.Set("lineOfSight", DynValue.NewBoolean(cell.Los));
+        row.Set("walkableDuringFight", DynValue.NewBoolean(!cell.NonWalkableDuringFight));
+        row.Set("farmCell", DynValue.NewBoolean(cell.FarmCell));
+        row.Set("floor", DynValue.NewNumber(cell.Floor));
+        row.Set("mapChangeData", DynValue.NewNumber(cell.MapChangeData));
+        row.Set("arrow", DynValue.NewNumber(cell.Arrow));
+        row.Set("interactive", DynValue.NewBoolean(interactiveIds.Length > 0));
+        row.Set("interactiveElementIds", DynValue.NewTable(interactive));
+        row.Set("occupied", DynValue.NewBoolean(map.GetActors().Values.Any(actor => actor.Disposition.CellId == cell.Id)));
+        return row;
     }
 
     private Table BuildCharacter(Script script)
