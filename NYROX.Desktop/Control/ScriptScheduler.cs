@@ -49,11 +49,11 @@ internal sealed class ScriptScheduler : IAsyncDisposable
             return false;
         }
 
-        // Validate callback and loaded script before creating the background loop.
-        var probe = client.InvokeLuaCallback(profile.CallbackName);
-        if (!probe.Succeeded)
+        // Validate callback existence without invoking it. Starting a schedule must not
+        // execute a game action as a side effect of validation.
+        if (!client.HasLuaCallback(profile.CallbackName))
         {
-            error = probe.Error ?? "Callback validation failed. Load the profile's script first.";
+            error = $"Lua callback '{profile.CallbackName}' is not loaded. Load the profile's script first.";
             return false;
         }
 
@@ -115,7 +115,8 @@ internal sealed class ScriptScheduler : IAsyncDisposable
         }
         finally
         {
-            _running.TryRemove(new KeyValuePair<string, RunningSchedule>(running.AccountId, running));
+            if (_running.TryGetValue(running.AccountId, out var current) && ReferenceEquals(current, running))
+                _running.TryRemove(running.AccountId, out _);
             running.Cancellation.Dispose();
         }
     }
