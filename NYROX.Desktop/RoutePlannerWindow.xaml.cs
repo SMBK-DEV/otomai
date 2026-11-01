@@ -1,6 +1,5 @@
 using Microsoft.Win32;
 using System.Windows;
-using NYROX.Desktop.Control;
 using BubbleBot.Cli.Repository;
 
 namespace NYROX.Desktop;
