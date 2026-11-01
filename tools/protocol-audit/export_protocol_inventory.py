@@ -69,7 +69,7 @@ def inventory(source_root: Path, mapping_path: Path):
                 declaration = " ".join(prop.group("decl").split())
                 name = prop.group("name")
                 if "List<" in declaration: presence = "repeated"
-                elif f"ShouldSerialize{name}()" in tail: presence = "optional"
+                elif re.search(rf"\bShouldSerialize{re.escape(name)}\s*\(", body): presence = "optional"
                 elif re.search(r"\brequired\b", declaration): presence = "required"
                 else: presence = "not-explicit"
                 rows.append({
