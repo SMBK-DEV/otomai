@@ -39,7 +39,7 @@ public static class DesktopMapRouteCatalog
             error = string.Empty;
             return true;
         }
-        catch (Exception exception) when (exception is IOException or JsonException or UnauthorizedAccessException or InvalidDataException)
+        catch (Exception exception) when (exception is IOException or JsonException or UnauthorizedAccessException )
         {
             error = exception.Message;
             lock (Sync) _loadError = $"Map catalog load failed: {exception.Message}";
