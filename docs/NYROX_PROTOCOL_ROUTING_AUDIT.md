@@ -33,8 +33,9 @@ This is real application-level dispatch, not a guess based on protobuf field num
 
 - **Verified:** the handler class and exact C# protocol message type for each case listed above.
 - **Verified:** a decoded message that no handler consumes is counted by `RecordUnmappedDomainEvent`.
-- **Not yet verified:** quest/NPC dialogue protocol handling. No dedicated quest or NPC dialogue handler is registered in the six-handler list inspected here.
-- **Not yet verified:** dungeon entry/exit/boss protocol handling as a dedicated feature. Some dungeon-related transitions may arrive through generic map, context, actor, or fight messages, but this audit does not label them as dungeon-specific.
+- **Verified from generated mappings:** quest events include `QuestObjectiveUpdatedEvent`, `QuestStepValidatedEvent`, `QuestStepStartedEvent`, `QuestStepInformationEvent`, `QuestStartedEvent`, `QuestsFollowedEvent`, `QuestObjectiveValidatedEvent`, `QuestsEvent`, and `QuestValidatedEvent`. NPC/dialogue events include `NpcsMapQuestStatusUpdateEvent`, `NpcDialogCreationEvent`, `NpcDialogQuestionEvent`, `NpcGenericActionFailureEvent`, `TaxCollectorDialogQuestionEvent`, `PrismDialogQuestionEvent`, `EntityTalkEvent`, and `DialogLeaveEvent`.
+- **Implemented:** `GameQuestNpcProtocolObserverHandler` now recognizes these exact generated message classes and routes them into the Handler routing telemetry. It is deliberately observer-only: it does not automatically select NPC replies, send generic NPC actions, or change quest state.
+- **Not yet implemented:** quest-state persistence/progression, NPC reply selection, and dungeon entry/exit/boss workflow handling. Generic map/context/fight events are not labeled as dungeon-specific without evidence.
 - **Not yet decoded:** protobuf field names. The generic sniffer only walks wire types and field numbers; schema descriptors or generated message metadata are needed for named fields.
 - **Not tested live:** no Dofus runtime, account, or Lua script was started for this audit.
 
@@ -52,6 +53,4 @@ The endpoint uses the existing loopback-only authenticated Control API.
 
 ## Next implementation target
 
-Use the generated protocol definitions / descriptors and the exact type mapping to add safe named-field decoding.
-Then identify Quest and NPC dialogue messages from their actual definitions or a deliberately enabled capture
-session. Do not label generic map/context/fight traffic as dungeon-specific without evidence.
+Build quest-state tracking and NPC dialogue decision support on top of the newly verified observer events. Use captured payloads and generated classes to map obfuscated quest/NPC field names before implementing any reply or progression action. Then identify dungeon-specific transitions from their actual message types and map metadata.
