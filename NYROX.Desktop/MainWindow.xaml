@@ -16,7 +16,8 @@
                     <Button Content="Overview" HorizontalContentAlignment="Left" Click="Refresh_Click"/>
                     <Button Content="Accounts" HorizontalContentAlignment="Left" Click="Accounts_Click"/>
                     <Button Content="Scripts &amp; Profiles" HorizontalContentAlignment="Left" Click="Scripts_Click"/>
-                    <Button Content="Tasks &amp; Routes" HorizontalContentAlignment="Left" Click="Tasks_Click"/>
+                    <Button Content="Task Monitor" HorizontalContentAlignment="Left" Click="Tasks_Click"/>
+                    <Button Content="Route Planner" HorizontalContentAlignment="Left" Click="Routes_Click"/>
                     <Button Content="Live Logs" HorizontalContentAlignment="Left" Click="Logs_Click"/>
                     <Button Content="Game Data" HorizontalContentAlignment="Left" Click="GameData_Click"/>
                     <Button Content="Settings" HorizontalContentAlignment="Left" Click="Settings_Click"/>
