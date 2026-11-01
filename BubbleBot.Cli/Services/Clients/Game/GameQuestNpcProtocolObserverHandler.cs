@@ -6,9 +6,11 @@ namespace BubbleBot.Cli.Services.Clients.Game;
 /// Marks verified quest and NPC dialogue protocol events as observed by the router.
 /// This is intentionally observer-only: it does not answer NPC dialogs or mutate quest state.
 /// </summary>
-internal sealed class GameQuestNpcProtocolObserverHandler : IGameMessageHandler
+internal sealed class GameQuestNpcProtocolObserverHandler(QuestNpcEventStore events) : IGameMessageHandler
 {
-    public bool TryHandle(IProtoMessage message) => message switch
+    public bool TryHandle(IProtoMessage message)
+    {
+        var handled = message switch
     {
         QuestObjectiveUpdatedEvent => true,
         QuestStepValidatedEvent => true,
@@ -28,5 +30,11 @@ internal sealed class GameQuestNpcProtocolObserverHandler : IGameMessageHandler
         EntityTalkEvent => true,
         DialogLeaveEvent => true,
         _ => false
-    };
+        };
+
+        if (handled)
+            events.Observe(message);
+
+        return handled;
+    }
 }
