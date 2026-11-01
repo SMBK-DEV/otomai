@@ -359,7 +359,11 @@ public partial class MainWindow : Window
 
     private void Accounts_Click(object sender, RoutedEventArgs e) => SetPage("Accounts", "Live sessions, connection status and account actions.");
     private void Scripts_Click(object sender, RoutedEventArgs e) => SetPage("Scripts & Profiles", "Load Lua scripts, save profiles and schedule explicit callbacks.");
-    private void Tasks_Click(object sender, RoutedEventArgs e) => SetPage("Tasks & Routes", "Task scheduling currently supports explicit Lua callbacks through saved profiles; route editor remains pending.");
+    private void Tasks_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new TasksWindow(_token) { Owner = this };
+        window.ShowDialog();
+    }
     private void Logs_Click(object sender, RoutedEventArgs e) => SetPage("Live Logs", "Recent local control, profile and scheduler events. Game-internal structured logs are not yet streamed.");
     private void GameData_Click(object sender, RoutedEventArgs e)
     {
