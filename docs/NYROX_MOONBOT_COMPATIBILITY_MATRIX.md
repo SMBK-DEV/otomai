@@ -22,11 +22,16 @@ The adapter registers the documented Lua global names only where BubbleBot has a
 | character.level() | CharacterBasicInformation.Level | Character level, nil before character info |
 | character.cellId() | CharacterInfo.CellId | Current cell |
 | fight.isInFight() | BotGameClient.IsInFight | Current fight state |
+| inventory.list() | Inventory.Items + datacenter templates | UID/GID/template ID/quantity/position/name/type/weight/level/equipped snapshot |
+| inventory.countItem(gid) | Inventory.Items quantity sum by template ID | Total quantity for a template ID |
+| inventory.equipItem(uid) | Guarded GameWorkflowService.EquipItem | Equips only into a compatible empty slot; never replaces existing gear; requires level |
+| inventory.useItemByGID(gid) | Guarded GameWorkflowService.UseItemByGid | Uses one matching usable item; may consume it; returns false if none |
+
 | bot.isFighting() | BotGameClient.IsInFight | Alias used by NYROX |
 | global.isInFight() | BotGameClient.IsInFight | Alias used by NYROX |
 | console.print(...) / global.printMessage(...) | GameNotificationService logger | Account-scoped log output |
 
-The existing `bubble.*` read-only namespace remains available for BubbleBot-specific diagnostics.
+The existing `bubble.*` read-only namespace remains available for BubbleBot-specific diagnostics. Inventory `equipItem` is restricted to empty slots and never swaps existing equipment. `useItemByGID` is a state-changing action and should only be called when the script's item policy explicitly allows consuming that item.
 
 ## Intentionally unsupported (not emulated)
 
@@ -34,7 +39,7 @@ These NYROX functions currently have no verified matching BubbleBot service/stat
 
 - `quest.getActiveQuests`, `getCompletedQuests`, `isQuestActive`, `isQuestCompleted`, `getCurrentStep`, `getQuestName`, `getQuestSteps`, `getObjectives`, `requestStepInfo`.
 - `npc.isInDialog`, `getQuestionText`, `getQuestionId`, `getResponseTexts`, `getResponses`, `npc`, `reply`, `leaveDialog`, `npcBank`.
-- `inventory.list`, `countItem`, `useItemByGID`, `equipItem`.
+- `inventory` item effects are not fully exposed; complete equipment-effect scoring is unsupported.
 - `gameData.getDungeons`, `getDungeon`, `searchDungeons`, `getChallenges`, `getMapCells`, `getQuest`, `getAchievement`.
 - `map.npcs`, `getInteractives`, `interactiveObjects`, `monsterGroups`, `fightGroup`, `door`, `exitDungeon`, `waitForMapChange`.
 - `fight.getChallenges`, `getChallengeResult`.
