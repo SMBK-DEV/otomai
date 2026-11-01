@@ -23,10 +23,10 @@
                     <DataGrid x:Name="AccountsGrid" Grid.Row="1" AutoGenerateColumns="True" IsReadOnly="True" CanUserAddRows="False" Margin="3,10,3,3"/>
                 </Grid>
             </TabItem>
-            <TabItem Header="Account creation">
+            <TabItem Header="Account Creator">
                 <Grid Margin="18"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                    <TextBlock Text="Prepare new account registrations here, then complete identity verification and registration on the official Ankama site. This workspace does not bypass CAPTCHA, SMS, email or anti-abuse checks." TextWrapping="Wrap" Foreground="#B5C2D0" Margin="3,3,3,14"/>
-                    <WrapPanel Grid.Row="1"><TextBox x:Name="NewAccountAliasBox" Width="190" ToolTip="Account label"/><TextBox x:Name="NewAccountEmailBox" Width="230" ToolTip="Email address"/><TextBox x:Name="NewAccountServerBox" Width="140" Text="Draconiros" ToolTip="Preferred server"/><Button Content="Add to registration queue" Click="QueueAccount_Click"/><Button Content="Open Ankama registration" Click="OpenRegistration_Click"/></WrapPanel>
+                    <TextBlock Text="Existing account-creation code is already present in BubbleBot.AccountCreation and tools/account-creator. This screen links completed, legitimately registered accounts into the shared NYROX account registry. Use the official Ankama flow for registration and verification; no CAPTCHA, WAF, SMS or anti-abuse bypass is launched from this panel." TextWrapping="Wrap" Foreground="#B5C2D0" Margin="3,3,3,14"/>
+                    <WrapPanel Grid.Row="1"><TextBox x:Name="NewAccountAliasBox" Width="190" ToolTip="Account label"/><TextBox x:Name="NewAccountEmailBox" Width="230" ToolTip="Email address"/><TextBox x:Name="NewAccountServerBox" Width="140" Text="Draconiros" ToolTip="Preferred server"/><Button Content="Add registration task" Click="QueueAccount_Click"/><Button Content="Open Ankama registration" Click="OpenRegistration_Click"/><Button Content="Mark selected complete → Accounts" Click="CompleteRegistration_Click"/></WrapPanel>
                     <DataGrid x:Name="RegistrationGrid" Grid.Row="2" AutoGenerateColumns="True" IsReadOnly="True" CanUserAddRows="False" Margin="3,10,3,3"/>
                 </Grid>
             </TabItem>
