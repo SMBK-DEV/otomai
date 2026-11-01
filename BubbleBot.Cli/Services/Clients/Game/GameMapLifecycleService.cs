@@ -95,8 +95,51 @@ internal sealed class GameMapLifecycleService : GameClientServiceBase
         }
         else if (AutoPath.Count > 0)
         {
-            AutoPathIndex++;
-            Client.StartAutoPath();
+            // A map event is authoritative, but it must match the edge currently
+            // being traversed before advancing the route. Otherwise a respawn,
+            // teleport, rejected transition, or unrelated map change can skip
+            // one or more path edges and send the client in the wrong direction.
+            if (AutoPathIndex < 0 || AutoPathIndex >= AutoPath.Count)
+            {
+                LogWarning("AutoPath index {PathIndex} is invalid for {PathCount} edges; stopping route",
+                           AutoPathIndex,
+                           AutoPath.Count);
+                AutoPath = [];
+                AutoPathIndex = 0;
+                AutoPathEndMapId = -1;
+            }
+            else
+            {
+                var expectedEdge = AutoPath[AutoPathIndex];
+                var arrivedOnExpectedMap =
+                    mapEvent.MapId == expectedEdge.To.MapId ||
+                    expectedEdge.Transitions.Any(transition =>
+                        transition.TransitionMapId == mapEvent.MapId);
+
+                if (arrivedOnExpectedMap)
+                {
+                    AutoPathIndex++;
+                    Client.StartAutoPath();
+                }
+                else if (mapEvent.MapId != expectedEdge.From.MapId)
+                {
+                    LogWarning(
+                        "Unexpected map {ActualMapId} while following route; expected edge {FromMapId} -> {ToMapId}. Stopping stale route",
+                        mapEvent.MapId,
+                        expectedEdge.From.MapId,
+                        expectedEdge.To.MapId);
+                    AutoPath = [];
+                    AutoPathIndex = 0;
+                    AutoPathEndMapId = -1;
+                }
+                else
+                {
+                    LogInfo("Map {MapId} refreshed; route remains on edge {FromMapId} -> {ToMapId}",
+                            mapEvent.MapId,
+                            expectedEdge.From.MapId,
+                            expectedEdge.To.MapId);
+                }
+            }
         }
 
         Client.DoWork();
