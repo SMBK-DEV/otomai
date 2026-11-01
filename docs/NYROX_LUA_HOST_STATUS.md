@@ -19,7 +19,7 @@ Branch: nyrox/integration
 - No `map`, `fight`, `npc`, `inventory`, `quest`, `character`, `group`, or `gameData` compatibility implementation is claimed complete.
 - No AnkaBot API adapter is implemented; AnkaBot PC remains a design reference only.
 - The CLI references `BubbleBot.Scripting`; each `BotGameClient` owns its own host and disposes it on disconnect.
-- A GitHub Actions .NET 9 restore/build workflow is configured. The latest run is pending; earlier runs exposed and fixed callback-argument formatting compile errors. Build success must be confirmed from the latest run.
+- GitHub Actions .NET 9 restore/build passed on commit `e69e89ae3c4f505ffe4a0bd379a751099d6df216`; the Lua host test project also passed all four tests (callback execution, per-host isolation, missing callback failure, Lua exception handling). The later sample-script/docs-only commits are awaiting their own CI run.
 
 ## Runtime safety / execution model
 
@@ -38,6 +38,9 @@ Branch: nyrox/integration
 6. Do not invoke security bypass, CAPTCHA bypass, Shield-disabling, or account-creation utilities.
 
 ## Validation status
+
+- Offline .NET 9 solution build: passed.
+- Lua host contract tests: 4 passed.
 
 - GitHub source files and solution changes were written to `nyrox/integration`.
 - No local .NET SDK/build environment was available through the connected GitHub workflow used for this source edit; compilation and package restore remain unverified.
