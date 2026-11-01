@@ -408,6 +408,16 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
             _client.FightInfo?.FighterPlaying?.Id == _client.PlayerId)));
         t.Set("isMyTurnReady", Fn(() => DynValue.NewBoolean(
             _client.FightInfo?.IsMyTurnReady ?? false)));
+        t.Set("passTurn", DynValue.NewCallback((_, _) =>
+        {
+            var fight = _client.FightInfo;
+            if (!_client.Connected || !_client.IsInFight || fight is null ||
+                fight.IsEnded || fight.FighterPlaying?.Id != _client.PlayerId)
+                return DynValue.False;
+
+            fight.PassTurn();
+            return DynValue.True;
+        }));
         t.Set("getActors", DynValue.NewCallback((_, _) =>
         {
             var result = new Table(script);
