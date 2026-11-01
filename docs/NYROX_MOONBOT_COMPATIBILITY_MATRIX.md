@@ -53,6 +53,16 @@ These functions are deliberately absent, rather than stubbed to return success o
 
 `map.worldDistance(x,y)` is intentionally not implemented. The supplied MoonBot Unity reference says it returns zero on Unity; BubbleBot's route service uses its world graph instead.
 
+## Success-event observation extension
+
+The adapter exposes a deliberately non-MoonBot extension namespace `success`:
+
+- `success.getObservedCompletedAchievements()` returns achievement IDs observed from `AchievementsEvent`, `AchievementFinishedEvent`, and `AchievementFinishedInformationEvent` during this client session.
+- `success.wasObservedCompleted(id)` checks that session-scoped set.
+- `success.observationScope()` returns `current-session-server-events-only`.
+
+This is not a full account achievement journal: IDs are not persisted across reconnects, and no static achievement-name mapping is implied. The data is sourced from actual server events, never guessed from local quest/dungeon catalogues.
+
 ## Current readiness
 
 - Lua interpreter and per-account host: implemented.
