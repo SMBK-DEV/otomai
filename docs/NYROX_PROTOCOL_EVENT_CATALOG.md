@@ -110,3 +110,75 @@ The checked-in TypeUrl mapping contains no message whose mapped class name direc
 5. Treat client requests as requests, not proof that the server accepted the action.
 6. Do not expose guessed semantic field names or fabricate empty quest/dialogue/challenge state.
 7. Do not run live MoonBot or Dofus sessions as part of offline protocol review.
+
+
+## Verified wire-field inventory (2026-11-01)
+
+The following inventory records only the generated C# contract shape: protobuf field number, generated property identifier, CLR type, and required/optional/repeated status. It deliberately does not assign gameplay meaning to obfuscated identifiers.
+
+### Quest records and events
+
+| TypeUrl / contract | Field # | Generated property | CLR shape | Presence |
+|---|---:|---|---|---|
+| `hli` QuestStartedEvent | 1 | `Eavk` | `int` | required |
+| `hld` QuestStepStartedEvent | 1 | `Eauh` | `int` | required |
+| `hld` QuestStepStartedEvent | 2 | `Eaui` | `int` | required |
+| `hkz` QuestStepValidatedEvent | 1 | `Eatrs` | `List<string>` | repeated |
+| `hkz` QuestStepValidatedEvent | 2 | `Eats` | `int` | required |
+| `hkz` QuestStepValidatedEvent | 3 | `Eatt` | `int` | required |
+| `hky` QuestObjectiveUpdatedEvent | 1 | `Eatl` | `int` | required |
+| `hky` QuestObjectiveUpdatedEvent | 2 | `Eatm` | `Completion` | required |
+| `hky` QuestObjectiveUpdatedEvent | 3 | `Eatn` | `int` | required |
+| `hlm` QuestObjectiveValidatedEvent | 1 | `Eawe` | `int` | required |
+| `hlm` QuestObjectiveValidatedEvent | 2 | `Eawf` | `int` | required |
+| `hlv` QuestValidatedEvent | 1 | `Eaxs` | `int` | required |
+| `hlc` QuestActive | 1 | `Eauc` | nested `Hla` | required |
+| `hlc` QuestActive | 2 | `Eaud` | `int` | required |
+| nested `Hla` | 1 | `Eatx` | `int` | required |
+| nested `Hla` | 2 | `Eaties` | `List<QuestObjective>` | repeated |
+| `hlg` QuestObjective | 1 | `Eauv` | `int` | required |
+| `hlg` QuestObjective | 2 | `Eauw` | `bool` | required |
+| `hlg` QuestObjective | 3 | `Eaux` | `Completion` | required |
+| `hlg` QuestObjective | 4 | `Eauys` | `List<string>` | repeated |
+| `hls` Completion | 1 | `Eaxf` | `long` | required |
+| `hls` Completion | 2 | `Eaxg` | `long` | required |
+| `hlh` QuestStepInformationEvent | 1 | `Eavc` | `QuestActive` | required |
+| `hlh` QuestStepInformationEvent | 2 | `Eavd` | `long` | optional |
+| `hlh` QuestStepInformationEvent | 3 | `Eavf` | `long` | optional |
+| `hlr` QuestsEvent | 1 | `Eawvs` | `List<int>` | repeated |
+| `hlr` QuestsEvent | 2 | `Eawws` | `List<Hlp>` | repeated |
+| `hlr` QuestsEvent | 3 | `Eawx` | `long` | optional |
+| `hlr` QuestsEvent | 4 | `Eawzs` | `List<QuestActive>` | repeated |
+| `hlr` QuestsEvent | 5 | `Eaxa` | `long` | optional |
+| nested `Hlp` | 1 | `Eawp` | `int` | required |
+| nested `Hlp` | 2 | `Eawq` | `int` | required |
+| nested `Hlp` | 3 | `Eawr` | `int` | required |
+
+### NPC dialogue records and events
+
+| TypeUrl / contract | Field # | Generated property | CLR shape | Presence |
+|---|---:|---|---|---|
+| `htm` NpcDialogCreationEvent | 1 | `Ecck` | `long` | required |
+| `htm` NpcDialogCreationEvent | 2 | `Eccl` | enum `Htk` | optional |
+| `htm` NpcDialogCreationEvent | 3 | `Eccn` | `int` | required |
+| nested `Htk` enum | 0–4 | `HtkDhdh` … `HtkDhdl` | enum values | defined |
+| `hts` NpcDialogQuestionEvent | 1 | `Ecdgs` | `List<string>` | repeated |
+| `hts` NpcDialogQuestionEvent | 2 | `Ecdhs` | `List<Htq>` | repeated |
+| `hts` NpcDialogQuestionEvent | 3 | `Ecdi` | `int` | required |
+| nested `Htq` | 1 | `Ecdas` | `List<Hto>` | repeated |
+| nested `Htq` | 2 | `Ecdb` | `int` | required |
+| nested `Htq` | 3 | `Ecdcs` | `List<Hto>` | repeated |
+| nested `Hto` | 1 | `Eccu` | `int` | required |
+| nested `Hto` | 2 | `Eccv` | `bool` | optional |
+| `htt` NpcDialogReplyRequest | 1 | `Ecdm` | `int` | optional |
+| `htt` NpcDialogReplyRequest | 2 | `ReplyId` | `int` | required |
+| `htt` NpcDialogReplyRequest | 3 | `ReplyId2` | `int` | required |
+
+### Important decoding boundary
+
+The generated source comments identify input filenames such as `hlc.proto`, `hlg.proto`, `hts.proto`, and `htt.proto`, but the corresponding source schema files were not found in the repository tree. Protobuf field numbers and CLR types are therefore verifiable, while gameplay meaning is not. In particular:
+
+- Do not label any quest integer as quest ID, step ID, objective ID, or progress count without a schema or a captured, independently verified fixture.
+- Do not label dialogue integer fields as NPC ID, question ID, or reply-selection mode without equivalent evidence.
+- Do not send `NpcDialogReplyRequest` based solely on this shape; both required reply fields must be understood and validated first.
+- The next safe implementation step is to capture payload-free event occurrence counts during a user-authorized normal session, then obtain an approved schema/fixture or a controlled comparison that can establish field meanings. No live session was started for this audit.
