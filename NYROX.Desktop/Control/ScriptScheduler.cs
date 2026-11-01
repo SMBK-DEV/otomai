@@ -134,8 +134,21 @@ internal sealed class ScriptScheduler : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        foreach (var accountId in _running.Keys.ToArray())
-            await StopAsync(accountId);
+        var active = _running.Values.ToArray();
+        foreach (var running in active)
+        {
+            try { running.Cancellation.Cancel(); }
+            catch (ObjectDisposedException) { }
+        }
+
+        // Do not let an in-flight synchronous Lua callback outlive the desktop host.
+        // MoonSharp callbacks cannot be safely force-aborted; shutdown waits for return.
+        var workers = active.Select(x => x.Worker).Where(x => x is not null).Cast<Task>().ToArray();
+        if (workers.Length > 0)
+        {
+            try { await Task.WhenAll(workers); }
+            catch (OperationCanceledException) { }
+        }
     }
 
     private sealed class RunningSchedule(
