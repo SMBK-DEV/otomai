@@ -38,7 +38,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BubbleBot.ShieldDisable", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BubbleBot.Scripting", "BubbleBot.Scripting\BubbleBot.Scripting.csproj", "{8C3A2E91-6B2F-4D8B-9A41-6E21B4C7D903}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BubbleBot.Scripting.Tests", "BubbleBot.Scripting.Tests\\BubbleBot.Scripting.Tests.csproj", "{1B47B3E9-3A8C-4E95-9F5C-CC0A75F10A62}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BubbleBot.Scripting.Tests", "BubbleBot.Scripting.Tests\BubbleBot.Scripting.Tests.csproj", "{1B47B3E9-3A8C-4E95-9F5C-CC0A75F10A62}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
