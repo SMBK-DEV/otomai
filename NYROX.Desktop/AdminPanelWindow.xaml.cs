@@ -65,6 +65,18 @@ public partial class AdminPanelWindow : Window
         SelectedAccountText.Text = $"{account.Character} • {account.Id}\\nLevel {account.Level?.ToString() ?? "?"} • {(account.Connected ? "Connected" : "Disconnected")} • {(account.InFight ? "In fight" : "Not fighting")}";
     }
 
+    private void OpenProtocolSniffer_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedAccount is not { } account)
+        {
+            StatusText.Text = "Select an account first.";
+            return;
+        }
+
+        var window = new ProtocolSnifferWindow(_token, account.Id) { Owner = this };
+        window.Show();
+    }
+
     private void OpenMapCells_Click(object sender, RoutedEventArgs e)
     {
         if (SelectedAccount is not { } account)
