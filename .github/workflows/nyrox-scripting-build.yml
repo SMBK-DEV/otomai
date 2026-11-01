@@ -22,3 +22,5 @@ jobs:
         run: dotnet restore BubbleBot.sln
       - name: Build
         run: dotnet build BubbleBot.sln --configuration Release --no-restore
+      - name: Test Lua host
+        run: dotnet test BubbleBot.Scripting.Tests/BubbleBot.Scripting.Tests.csproj --configuration Release --no-restore
