@@ -106,14 +106,19 @@ internal sealed class ControlApiHost : IAsyncDisposable
                 return Results.Conflict(new { error = "The account has no active map snapshot yet." });
 
             var interactiveByCell = map.GetInteractiveElements()
-                .Select(element => new
+                .Select(element =>
                 {
-                    ElementId = element.ElementId,
-                    CellId = map.Data.GetInteractive(element.ElementId)?.CellId
+                    var data = map.Data.GetInteractive(element.ElementId);
+                    var skills = string.Join(", ", element.EnabledSkills.Select(skill =>
+                        $"{skill.SkillId}:{skill.SkillInstanceUid}"));
+                    return (
+                        CellId: data?.CellId,
+                        ElementId: element.ElementId,
+                        Detail: $"Element {element.ElementId} • gfx {data?.GfxId ?? 0} • interaction {data?.InteractionId ?? 0} • skills [{skills}]");
                 })
                 .Where(element => element.CellId.HasValue)
                 .GroupBy(element => element.CellId!.Value)
-                .ToDictionary(group => group.Key, group => group.Select(element => element.ElementId).ToArray());
+                .ToDictionary(group => group.Key, group => group.ToArray());
 
             var occupiedCells = map.GetActors().Values
                 .Select(actor => actor.Disposition.CellId)
@@ -137,7 +142,8 @@ internal sealed class ControlApiHost : IAsyncDisposable
                     mapChangeData = cell.MapChangeData,
                     arrow = cell.Arrow,
                     interactive = elementIds is { Length: > 0 },
-                    interactiveElementIds = elementIds ?? Array.Empty<int>(),
+                    interactiveElementIds = elementIds?.Select(element => element.ElementId).ToArray() ?? Array.Empty<int>(),
+                    interactiveElementDetails = elementIds?.Select(element => element.Detail).ToArray() ?? Array.Empty<string>(),
                     occupied = occupiedCells.Contains(cell.Id)
                 };
             }).ToArray();
