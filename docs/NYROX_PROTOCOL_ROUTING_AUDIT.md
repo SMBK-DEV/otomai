@@ -55,3 +55,11 @@ The endpoint uses the existing loopback-only authenticated Control API.
 ## Next implementation target
 
 Build quest-state tracking and NPC dialogue decision support on top of the newly verified observer events. Use captured payloads and generated classes to map obfuscated quest/NPC field names before implementing any reply or progression action. Then identify dungeon-specific transitions from their actual message types and map metadata.
+
+## Quest / NPC event timeline (observer-only)
+
+- Verified quest and NPC message families consumed by `GameQuestNpcProtocolObserverHandler` are now recorded per account in a bounded in-memory event store (latest 100 events, per-type counts).
+- Desktop Protocol Sniffer exposes the `Quest & NPC` tab through the authenticated local endpoint `GET /api/v1/accounts/{id}/quest-npc-events`.
+- The event timeline includes protocol event type, UTC timestamp, and bounded schema-field diagnostics. String values and byte payloads are omitted; numeric and enum values are shown with their generated schema labels.
+- Generated labels such as `eatl`, `ecck`, or `ecdi` are not assigned guessed meanings. This is protocol observability, not quest progression, NPC reply automation, or a dungeon runner.
+- The store is session-local and memory-only; it resets with the account client and is capped at 100 events / 32 fields per event.
