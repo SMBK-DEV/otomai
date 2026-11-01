@@ -1,0 +1,48 @@
+<Window x:Class="NYROX.Desktop.GameDataWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="NYROX • Game Data Explorer" Height="650" Width="900"
+        MinHeight="480" MinWidth="700" WindowStartupLocation="CenterOwner"
+        Background="#101820" Foreground="#E8EEF5">
+    <Grid Margin="22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="Game Data Explorer" FontSize="25" FontWeight="SemiBold"/>
+            <TextBlock Text="Read-only search in the local Dofus Unity datacenters. No game action is performed."
+                       Foreground="#91A0B2" Margin="0,5,0,0"/>
+        </StackPanel>
+        <Grid Grid.Row="1" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="170"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <ComboBox x:Name="CategoryCombo" Height="36" SelectedIndex="0" Background="#0D141C" Foreground="#101820">
+                <ComboBoxItem Content="Items" Tag="items"/>
+                <ComboBoxItem Content="Monsters" Tag="monsters"/>
+                <ComboBoxItem Content="Achievements" Tag="achievements"/>
+            </ComboBox>
+            <TextBox x:Name="QueryBox" Grid.Column="1" Height="36" Margin="10,0" Padding="9"
+                     VerticalContentAlignment="Center" Background="#0D141C" Foreground="#E8EEF5"
+                     BorderBrush="#2A3948" KeyDown="QueryBox_KeyDown"/>
+            <Button Grid.Column="2" Content="Search" Width="100" Height="36" Click="Search_Click"/>
+        </Grid>
+        <DataGrid x:Name="ResultsGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True"
+                  CanUserAddRows="False" Background="#0D141C" Foreground="#E8EEF5"
+                  RowBackground="#111A24" AlternatingRowBackground="#14202B"
+                  BorderBrush="#2A3948" GridLinesVisibility="Horizontal">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="110"/>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Achievement objectives" Binding="{Binding ObjectiveCount}" Width="190"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBlock x:Name="StatusText" Grid.Row="3" Text="Enter a name and search."
+                   Foreground="#91A0B2" Margin="0,12,0,0"/>
+    </Grid>
+</Window>
