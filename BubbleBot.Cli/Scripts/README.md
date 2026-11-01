@@ -12,7 +12,7 @@ if (!audit.Succeeded)
     client.LogError("Lua callback failed: {Error}", audit.Error);
 ```
 
-The file is copied to the CLI output under `Scripts/`. The loader rejects paths that escape this directory. Read-only examples are included as `nyrox-diagnostics.lua` (snapshot smoke check) and `nyrox-compatibility-audit.lua` (function-presence audit). The latter reports unsupported quest/NPC/Game Data APIs instead of inventing placeholders.
+The file is copied to the CLI output under `Scripts/`. The loader rejects paths that escape this directory. Read-only examples are included as `nyrox-diagnostics.lua` (snapshot smoke check) and `nyrox-compatibility-audit.lua` (function-presence audit). The audit also reports session-scoped, unmapped quest/NPC/dungeon/challenge protocol event type names through `nyrox.getObservedDomainProtocolEvents()`; it stores no payloads and does not claim quest state.
 
 This project currently exposes only the documented MoonBot Unity subset listed in `docs/NYROX_MOONBOT_COMPATIBILITY_MATRIX.md`. The full NYROX quest/dungeon engine is not yet compatible: quest-state, NPC/dialogue, dungeon Game Data, monster-group, challenge-state, and dungeon-transition APIs are still missing. Basic inventory snapshots/counting and guarded equip/use operations are implemented. Do not load the full production engine expecting it to complete quests until those APIs are implemented and offline-tested.
 
