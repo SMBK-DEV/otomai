@@ -51,8 +51,7 @@ internal sealed class ClientTransportService
             var messageData = new byte[_context.ExpectedLength.Value];
             _context.Buffer.Read(messageData, 0, _context.ExpectedLength.Value);
 
-            _logger.LogInfo("RCV raw: {Length} bytes: {Hex}", messageData.Length,
-                BitConverter.ToString(messageData, 0, Math.Min(messageData.Length, 64)));
+            _logger.LogInfo("RCV framed message: {Length} bytes", messageData.Length);
 
             GameMessage message;
             try
@@ -219,8 +218,6 @@ internal sealed class ClientTransportService
         using var bodyStream = new MemoryStream();
         Serializer.Serialize(bodyStream, message);
         var payload = bodyStream.ToArray();
-        _packetCapture.TryCapture("outgoing", typeUrl, payload);
-
         var request = new GameMessage
         {
             Request = new Request
@@ -245,6 +242,7 @@ internal sealed class ClientTransportService
         header.Item1.CopyTo(headerSpan);
         messageContent.CopyTo(headerSpan[header.Item2..]);
 
-        _sendAsync(finalContent);
+        if (_sendAsync(finalContent))
+            _packetCapture.TryCapture("outgoing", typeUrl, payload);
     }
 }
