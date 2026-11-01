@@ -37,3 +37,15 @@ The `nyrox` diagnostics expose bounded, payload-free counts of incoming protocol
 message type names (including messages handled by the client) and a separate list
 of unhandled type names. These are session observations only; they do not decode
 quest, dialogue, dungeon or challenge state.
+
+
+### Live map-cell inspection
+
+The reviewed MoonBot Unity compatibility subset exposes read-only cell snapshots:
+
+- `map.getCells()` returns the current map's cells in cell-ID order.
+- `map.getCell(cellId)` returns one cell snapshot, or `nil` for an invalid ID or unavailable map.
+- Each snapshot includes `id`, `x`, `y`, `visible`, `walkable`, `lineOfSight`, `walkableDuringFight`, `farmCell`, `floor`, `mapChangeData`, `arrow`, `interactive`, `interactiveElementIds`, and `occupied`.
+- `map.exits()` remains the separate list of graph transitions by direction.
+
+These are current-session runtime snapshots. `mapChangeData` is exposed as raw cell metadata and is not asserted to be a verified door/exit marker. The API is read-only; it does not click or traverse a selected cell.
