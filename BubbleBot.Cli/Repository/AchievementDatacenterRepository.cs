@@ -45,7 +45,7 @@ internal static class AchievementDatacenterRepository
             return AchievementsById.Value.Values
                 .Where(achievement => DatacenterService.GetText(unchecked((uint)achievement.NameId))
                     .Contains(query, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(achievement => DatacenterService.GetText(achievement.NameId), StringComparer.OrdinalIgnoreCase)
+                .OrderBy(achievement => DatacenterService.GetText(unchecked((uint)achievement.NameId)), StringComparer.OrdinalIgnoreCase)
                 .Take(Math.Clamp(limit, 1, 50))
                 .ToArray();
         }
