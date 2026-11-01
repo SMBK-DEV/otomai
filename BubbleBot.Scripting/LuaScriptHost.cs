@@ -8,7 +8,7 @@ namespace BubbleBot.Scripting;
 /// This host deliberately does not load files, open sockets, or expose the
 /// operating system to Lua.
 /// </summary>
-public sealed class LuaScriptHost
+public sealed class LuaScriptHost : IDisposable
 {
     private readonly Script _script;
     private readonly object _gate = new();
