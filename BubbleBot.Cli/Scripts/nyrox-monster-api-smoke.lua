@@ -7,9 +7,9 @@ end
 
 local result = {
     getMonster = available(gameData, "getMonster"),
-    searchMonsters = available(gameData, "searchMonsters")
+    searchMonsters = available(gameData, "searchMonsters"),\n    getItem = available(gameData, "getItem"),\n    searchItems = available(gameData, "searchItems")
 }
 
 console.print("Local monster API: getMonster=", result.getMonster,
-    " searchMonsters=", result.searchMonsters)
+    " searchMonsters=", result.searchMonsters,\n    " getItem=", result.getItem, " searchItems=", result.searchItems)
 return result
