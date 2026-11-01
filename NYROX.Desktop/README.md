@@ -41,21 +41,23 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 - MoonSharp callbacks are synchronous and cannot be safely force-aborted. A callback must return promptly. If a callback is still running after a stop request, the scheduler keeps the account locked against replacement/disconnect until it returns. Desktop shutdown waits for in-flight callbacks to return rather than letting them outlive the host.
 - The scheduler is a bounded callback runner, not yet a full route/task workflow engine.
 
-## F10 Admin quick panel\n\n- Press F10 while NYROX Desktop is running to open a topmost Admin quick panel over the current desktop/game window.\n- The panel uses the same loopback Control API and DPAPI-backed owner token; it does not inject code into or modify the Dofus Unity process.\n- Shows live account state and scheduled callback count, with confirmed stop-scheduler, stop-Lua and disconnect actions.\n- F10 is a Windows global hotkey. Registration can fail if another application already owns F10; the main window reports that condition.\n- The quick panel is a companion desktop window, not an in-game-rendered overlay. Exclusive-fullscreen games or game-level hotkey handling may prevent it from appearing above the game.\n\n## Local Control API
+## F10 Admin quick panel
+
+- Press F10 while NYROX Desktop is running to open a topmost Admin quick panel over the current desktop/game window.\n- The panel uses the same loopback Control API and DPAPI-backed owner token; it does not inject code into or modify the Dofus Unity process.\n- Shows live account state and scheduled callback count, with confirmed stop-scheduler, stop-Lua and disconnect actions.\n- F10 is a Windows global hotkey. Registration can fail if another application already owns F10; the main window reports that condition.\n- The quick panel is a companion desktop window, not an in-game-rendered overlay. Exclusive-fullscreen games or game-level hotkey handling may prevent it from appearing above the game.\n\n## Local Control API
 
 - Binds only to `127.0.0.1:48621`.
 - Every request requires `X-NYROX-Token`.
 - The token is generated from 48 cryptographically random bytes and protected with Windows DPAPI for the current user under `%LOCALAPPDATA%\NYROX\control.token`.
 - API routes cover status, live accounts, script listing/loading/stopping, account connection/disconnection, profile create/list/delete, scheduler status/start/stop and recent logs.
 - No CORS policy or public listener is enabled.
-- The first desktop release has one local owner/admin token. Viewer/Operator role provisioning, audit history, remote control and in-game F10 overlay are not implemented yet.
+- The first desktop release has one local owner/admin token. Viewer/Operator role provisioning, audit history and remote control are not implemented. The F10 panel is a companion desktop window, not code injected into the game.
 
 ## Runtime requirements and limitations
 
 - Account connection uses the existing local Zaap/BubbleBot account configuration. It does not create or alter Ankama credentials.
 - A connection request being accepted is not proof that the game session completed login. The live account list is authoritative for current process state.
 - The desktop app uses the existing `BotManager` and `BotGameClient` runtime from the CLI assembly; it does not start a second game engine.
-- Editable route execution, Zaap/dungeon/door transitions, quest/dungeon workflow management, installer/updater and in-game admin overlay remain future work. The route preview is not a movement command and does not model transition criteria or a character's live position.
+- Editable route execution, Zaap/dungeon/door transitions, quest/dungeon workflow management, installer/updater and a true in-game-rendered admin overlay remain future work. The route preview is not a movement command and does not model transition criteria or a character's live position.
 - No live game scripts are started automatically at application launch.
 
 ## Security
