@@ -68,6 +68,7 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     private readonly ClientTransportService _transportService;
     private readonly PacketCaptureStore _packetCaptureStore = new();
     private readonly QuestNpcEventStore _questNpcEvents = new();
+    private readonly DofusInterfaceStateStore _dofusInterfaceState = new();
     private readonly ClientVerificationService _verificationService;
     private readonly GameMessageRouter _messageRouter;
     private readonly object _luaScriptSync = new();
