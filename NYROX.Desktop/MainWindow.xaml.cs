@@ -1,4 +1,6 @@
-using System.Net.Http;\nusing System.Runtime.InteropServices;\nusing System.Windows.Interop;
+using System.Net.Http;
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -11,12 +13,14 @@ public partial class MainWindow : Window
     private readonly ControlApiClient _api;
     private readonly string _token;
     private readonly DispatcherTimer _refreshTimer;
-    private bool _refreshing;\n    private const int AdminHotkeyId = 0x4E59;\n    private const int WmHotkey = 0x0312;\n    private const uint ModNoRepeat = 0x4000;\n    private const uint VkF10 = 0x79;\n    private HwndSource? _hotkeySource;\n    private AdminPanelWindow? _adminWindow;
+    private bool _refreshing;
+    private const int AdminHotkeyId = 0x4E59;\n    private const int WmHotkey = 0x0312;\n    private const uint ModNoRepeat = 0x4000;\n    private const uint VkF10 = 0x79;\n    private HwndSource? _hotkeySource;\n    private AdminPanelWindow? _adminWindow;
 
     public MainWindow(string token)
     {
         InitializeComponent();
-        _token = token;\n        SourceInitialized += (_, _) => RegisterAdminHotkey();
+        _token = token;
+        SourceInitialized += (_, _) => RegisterAdminHotkey();
         _api = new ControlApiClient(token);
         ProfileCombo.DisplayMemberPath = nameof(ProfileInfo.Name);
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
