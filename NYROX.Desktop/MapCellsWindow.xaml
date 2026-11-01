@@ -19,25 +19,42 @@
             <Button DockPanel.Dock="Right" Content="Refresh" Click="Refresh_Click" Margin="8,0,0,0"/>
         </DockPanel>
         <WrapPanel Grid.Row="1" Margin="0,0,0,10">
-            <TextBlock Text="● Current cell" Foreground="#F4C542" Margin="0,0,14,0"/>
-            <TextBlock Text="● Interactive" Foreground="#38BDF8" Margin="0,0,14,0"/>
-            <TextBlock Text="● Map-change data" Foreground="#FB923C" Margin="0,0,14,0"/>
-            <TextBlock Text="● Occupied" Foreground="#C084FC" Margin="0,0,14,0"/>
-            <TextBlock Text="● Walkable" Foreground="#4ADE80" Margin="0,0,14,0"/>
-            <TextBlock Text="● Blocked" Foreground="#94A3B8"/>
+            <TextBlock Text="◆ Current cell" Foreground="#F4C542" Margin="0,0,14,0"/>
+            <TextBlock Text="◆ Interactive" Foreground="#38BDF8" Margin="0,0,14,0"/>
+            <TextBlock Text="◆ Map-change data" Foreground="#FB923C" Margin="0,0,14,0"/>
+            <TextBlock Text="◆ Occupied" Foreground="#C084FC" Margin="0,0,14,0"/>
+            <TextBlock Text="◆ Walkable" Foreground="#4ADE80" Margin="0,0,14,0"/>
+            <TextBlock Text="◆ Blocked" Foreground="#94A3B8" Margin="0,0,14,0"/>
+            <TextBlock Text="◆ Arrow" Foreground="#F472B6"/>
         </WrapPanel>
         <Border Grid.Row="2" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="7" Padding="10">
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                 <ItemsControl x:Name="CellsGrid">
                     <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate><UniformGrid Columns="28"/></ItemsPanelTemplate>
+                        <ItemsPanelTemplate><Canvas Width="660" Height="640"/></ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="{x:Type ContentPresenter}">
+                            <Setter Property="Canvas.Left" Value="{Binding CanvasX}"/>
+                            <Setter Property="Canvas.Top" Value="{Binding CanvasY}"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button Click="Cell_Click" Tag="{Binding}" Width="34" Height="29" Padding="0" Margin="1"
-                                    FontSize="9" BorderThickness="1" BorderBrush="#263445"
-                                    Content="{Binding Id}" ToolTip="{Binding Tooltip}"
-                                    Background="{Binding Brush}" Foreground="#F8FAFC"/>
+                            <Button Click="Cell_Click" Tag="{Binding}" Width="36" Height="22" Padding="0"
+                                    Background="Transparent" BorderThickness="0" ToolTip="{Binding Tooltip}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Grid>
+                                            <Polygon Points="18,0 36,11 18,22 0,11" Fill="{Binding Brush}"
+                                                     Stroke="#64748B" StrokeThickness="0.7"/>
+                                            <TextBlock Text="{Binding Id}" FontSize="8" FontWeight="SemiBold"
+                                                       Foreground="#F8FAFC" HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
