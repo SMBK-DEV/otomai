@@ -259,6 +259,15 @@ public partial class MainWindow : Window
         catch (Exception exception) { StatusText.Text = exception.Message; }
     }
 
+    private void ProfileCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ProfileCombo.SelectedItem is not ProfileInfo profile) return;
+        ProfileNameBox.Text = profile.Name;
+        CallbackNameBox.Text = profile.CallbackName;
+        IntervalBox.Text = profile.IntervalMs.ToString();
+        ScriptCombo.SelectedItem = profile.ScriptPath;
+    }
+
     private void AccountsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (SelectedAccount is null) return;
