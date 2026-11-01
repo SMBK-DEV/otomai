@@ -91,6 +91,10 @@ The IDs are held in `GameRuntimeState`, so they are isolated per game client. Th
 - Live Dofus testing: not performed.
 
 
+## Protocol message inventory
+
+A verified inventory of quest, NPC/dialogue and challenge message TypeUrls and generated contract shapes is maintained in [`NYROX_PROTOCOL_EVENT_CATALOG.md`](NYROX_PROTOCOL_EVENT_CATALOG.md). Message names and TypeUrls are confirmed against `Data/game_mappings.json`; obfuscated field meanings are intentionally not guessed. No dedicated dungeon-specific message name was found in that mapping, which does not rule out generic map, interactive or NPC-based dungeon transitions.
+
 ## NYROX protocol discovery diagnostics
 
 The game message router records counts for all otherwise-unhandled protocol message type names (not only names matching English domain keywords, because generated protocol names may be abbreviated or opaque). Lua can inspect this through:
