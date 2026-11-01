@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -20,6 +21,8 @@ internal sealed class ControlApiHost : IAsyncDisposable
     private readonly ControlLogStore _logs = new();
     private readonly ProfileStore _profiles = new();
     private readonly ScriptScheduler _scheduler;
+    private readonly ConcurrentDictionary<string, (BotGameClient Client, Action<string, string> Handler)> _logSubscriptions =
+        new(StringComparer.OrdinalIgnoreCase);
     private WebApplication? _app;
 
     public ControlApiHost(string token)
@@ -192,15 +195,48 @@ internal sealed class ControlApiHost : IAsyncDisposable
             return Results.Ok(new { stopped });
         });
 
-        app.MapGet("/api/v1/logs", (int? limit) => Results.Ok(_logs.Read(limit ?? 200)));
+        app.MapGet("/api/v1/logs", (int? limit) =>
+        {
+            AttachRuntimeLoggers();
+            return Results.Ok(_logs.Read(limit ?? 200));
+        });
 
         _app = app;
         await app.StartAsync(cancellationToken);
         _logs.Write("Information", "Control API", $"Local Control API listening on 127.0.0.1:{Port}.");
     }
 
+    private void AttachRuntimeLoggers()
+    {
+        var clients = BotManager.Instance.GetGameClients();
+        foreach (var pair in clients)
+        {
+            if (_logSubscriptions.TryGetValue(pair.Key, out var current) &&
+                ReferenceEquals(current.Client, pair.Value))
+                continue;
+
+            if (_logSubscriptions.TryRemove(pair.Key, out var previous))
+                previous.Client.DesktopLog -= previous.Handler;
+
+            var accountId = pair.Key;
+            Action<string, string> handler = (level, message) => _logs.Write(level, accountId, message);
+            pair.Value.DesktopLog += handler;
+            _logSubscriptions[pair.Key] = (pair.Value, handler);
+        }
+
+        foreach (var key in _logSubscriptions.Keys)
+        {
+            if (clients.ContainsKey(key)) continue;
+            if (_logSubscriptions.TryRemove(key, out var stale))
+                stale.Client.DesktopLog -= stale.Handler;
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
+        foreach (var subscription in _logSubscriptions.Values)
+            subscription.Client.DesktopLog -= subscription.Handler;
+        _logSubscriptions.Clear();
         await _scheduler.DisposeAsync();
         if (_app is null) return;
         await _app.StopAsync();
