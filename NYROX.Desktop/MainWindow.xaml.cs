@@ -261,6 +261,84 @@ public partial class MainWindow : Window
         catch (Exception exception) { StatusText.Text = exception.Message; }
     }
 
+    private List<AccountStatus> SelectedAccounts() =>
+        AccountsGrid.SelectedItems.Cast<AccountStatus>().ToList();
+
+    private async void StartScheduleBulk_Click(object sender, RoutedEventArgs e)
+    {
+        var accounts = SelectedAccounts();
+        var profile = ProfileCombo.SelectedItem as ProfileInfo;
+        if (accounts.Count == 0 || profile is null)
+        {
+            StatusText.Text = "Select one or more accounts and a saved profile.";
+            return;
+        }
+
+        var eligible = accounts.Where(x => x.Connected && !x.Stopped).ToList();
+        if (eligible.Count == 0)
+        {
+            StatusText.Text = "None of the selected accounts is connected and active.";
+            return;
+        }
+
+        if (MessageBox.Show(
+            $"Start '{profile.CallbackName}' every {profile.IntervalMs}ms on {eligible.Count} selected account(s)?\\n\\nThis invokes real Lua/game actions independently on each account.",
+            "Confirm multi-account Lua execution", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+
+        var accepted = new List<string>();
+        var failed = new List<string>();
+        foreach (var account in eligible)
+        {
+            try
+            {
+                using var response = await _api.PostAsync(
+                    $"api/v1/accounts/{Uri.EscapeDataString(account.Id)}/scheduler/start",
+                    new { profile = profile.Name });
+                if (response.IsSuccessStatusCode) accepted.Add(account.Id);
+                else failed.Add($"{account.Id}: {await response.Content.ReadAsStringAsync()}");
+            }
+            catch (Exception exception) { failed.Add($"{account.Id}: {exception.Message}"); }
+        }
+
+        StatusText.Text = $"Bulk start complete. Accepted: {accepted.Count}/{eligible.Count}. " +
+            (failed.Count == 0 ? "No errors." : string.Join(" | ", failed));
+        await RefreshDataAsync();
+    }
+
+    private async void StopScheduleBulk_Click(object sender, RoutedEventArgs e)
+    {
+        var accounts = SelectedAccounts();
+        if (accounts.Count == 0)
+        {
+            StatusText.Text = "Select one or more accounts first.";
+            return;
+        }
+
+        if (MessageBox.Show(
+            $"Request scheduler stop for {accounts.Count} selected account(s)?",
+            "Confirm bulk scheduler stop", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+
+        var stopped = 0;
+        var failed = new List<string>();
+        foreach (var account in accounts)
+        {
+            try
+            {
+                using var response = await _api.PostEmptyAsync(
+                    $"api/v1/accounts/{Uri.EscapeDataString(account.Id)}/scheduler/stop");
+                if (response.IsSuccessStatusCode) stopped++;
+                else failed.Add($"{account.Id}: {await response.Content.ReadAsStringAsync()}");
+            }
+            catch (Exception exception) { failed.Add($"{account.Id}: {exception.Message}"); }
+        }
+
+        StatusText.Text = $"Bulk stop processed: {stopped}/{accounts.Count}. " +
+            (failed.Count == 0 ? "No errors." : string.Join(" | ", failed));
+        await RefreshDataAsync();
+    }
+
     private void ProfileCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ProfileCombo.SelectedItem is not ProfileInfo profile) return;
