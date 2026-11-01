@@ -24,6 +24,7 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
         script.Globals.Set("character", DynValue.NewTable(BuildCharacter(script)));
         script.Globals.Set("fight", DynValue.NewTable(BuildFight(script)));
         script.Globals.Set("inventory", DynValue.NewTable(BuildInventory(script)));
+        script.Globals.Set("success", DynValue.NewTable(BuildSuccess(script)));
         script.Globals.Set("bot", DynValue.NewTable(BuildBot(script)));
         script.Globals.Set("global", DynValue.NewTable(BuildGlobal(script)));
         script.Globals.Set("console", DynValue.NewTable(BuildConsole(script)));
@@ -159,6 +160,31 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
                 return DynValue.False;
             return DynValue.NewBoolean(_client.UseItemByGid((int)gid));
         }));
+        return t;
+    }
+
+
+    private Table BuildSuccess(Script script)
+    {
+        var t = new Table(script);
+        // These IDs are confirmed by achievement server events observed by
+        // this client since the current session started. They are not a full
+        // account history and are not inferred from static datacenter data.
+        t.Set("getObservedCompletedAchievements", DynValue.NewCallback((_, _) =>
+        {
+            var result = new Table(script);
+            var index = 1;
+            foreach (var id in _client.GetObservedCompletedAchievementIds())
+                result.Set(index++, DynValue.NewNumber(id));
+            return DynValue.NewTable(result);
+        }));
+        t.Set("wasObservedCompleted", DynValue.NewCallback((_, args) =>
+        {
+            if (!TryGetNumber(args, 0, out var id) || id < int.MinValue || id > int.MaxValue)
+                return DynValue.False;
+            return DynValue.NewBoolean(_client.GetObservedCompletedAchievementIds().Contains((int)id));
+        }));
+        t.Set("observationScope", Fn(() => DynValue.NewString("current-session-server-events-only")));
         return t;
     }
 
