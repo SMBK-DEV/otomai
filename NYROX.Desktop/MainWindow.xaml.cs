@@ -41,8 +41,11 @@ public partial class MainWindow : Window
             var status = await _api.GetAsync<EngineStatus>("api/v1/status");
             var accounts = await _api.GetAsync<List<AccountStatus>>("api/v1/accounts") ?? [];
             var scripts = await _api.GetAsync<List<string>>("api/v1/scripts") ?? [];
+            var selectedAccountId = SelectedAccount?.Id;
 
             AccountsGrid.ItemsSource = accounts;
+            if (selectedAccountId is not null)
+                AccountsGrid.SelectedItem = accounts.FirstOrDefault(x => x.Id == selectedAccountId);
             AccountCountText.Text = accounts.Count.ToString();
             ConnectedCountText.Text = accounts.Count(x => x.Connected).ToString();
             FightCountText.Text = accounts.Count(x => x.InFight).ToString();
