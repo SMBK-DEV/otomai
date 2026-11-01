@@ -7,6 +7,7 @@ using System.Text.Json;
 using BubbleBot.Cli;
 using BubbleBot.Cli.Repository.Maps;
 using BubbleBot.Cli.Services;
+using BubbleBot.Cli.Services.Clients;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -203,6 +204,28 @@ internal sealed class ControlApiHost : IAsyncDisposable
                 accountId = id,
                 scope = "current-session-incoming-message-to-consuming-handler",
                 routes = client.GetObservedProtocolRoutes()
+            });
+        });
+
+        app.MapGet("/api/v1/accounts/{id}/packet-capture/{packetId:long}/decoded", (string id, long packetId) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            if (!client.PacketCapture.TryGet(packetId, out var packet) || packet is null)
+                return Results.NotFound(new { error = "Captured packet was not found. It may have been cleared or evicted." });
+
+            var payload = Convert.FromHexString(packet.PayloadHex);
+            var decoded = ProtocolPayloadDecoder.Decode(packet.Type, payload);
+            return Results.Ok(new
+            {
+                packet.Id,
+                packet.Type,
+                packet.Direction,
+                packet.Truncated,
+                decoded.Supported,
+                decoded.Message,
+                fields = decoded.Fields
             });
         });
 
