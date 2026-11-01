@@ -8,12 +8,14 @@ namespace NYROX.Desktop;
 public partial class AdminPanelWindow : Window
 {
     private readonly ControlApiClient _api;
+    private readonly string _token;
     private readonly DispatcherTimer _refreshTimer;
     private bool _refreshing;
 
     public AdminPanelWindow(string token)
     {
         InitializeComponent();
+        _token = token;
         _api = new ControlApiClient(token);
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _refreshTimer.Tick += async (_, _) => await RefreshDataAsync();
@@ -61,6 +63,18 @@ public partial class AdminPanelWindow : Window
     {
         if (SelectedAccount is not { } account) return;
         SelectedAccountText.Text = $"{account.Character} • {account.Id}\\nLevel {account.Level?.ToString() ?? "?"} • {(account.Connected ? "Connected" : "Disconnected")} • {(account.InFight ? "In fight" : "Not fighting")}";
+    }
+
+    private void OpenMapCells_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedAccount is not { } account)
+        {
+            StatusText.Text = "Select an account first.";
+            return;
+        }
+
+        var window = new MapCellsWindow(_token, account.Id) { Owner = this };
+        window.Show();
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await RefreshDataAsync();
