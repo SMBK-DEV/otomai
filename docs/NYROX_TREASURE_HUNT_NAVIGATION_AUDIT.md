@@ -59,6 +59,12 @@ This intentionally prefers a missing local match over a fabricated or ambiguous 
 3. `GameNavigationService` still selects `FirstOrDefault()` from an edge's transitions.
    Transition ordering and suitability need fixtures based on actual world-graph data before
    changing that behavior.
+4. `GameMapLifecycleService.OnNewMap()` now advances `AutoPathIndex` only when the
+   authoritative map event matches the current edge's destination map or one of that edge's
+   declared transition map IDs. A repeated map event for the edge's source map leaves the
+   current edge unchanged. An unrelated arrival or invalid path index clears the stale route
+   rather than blindly incrementing and potentially skipping navigation steps. This is a
+   defensive route-state fix; live transition behavior remains unverified.
 
 ## Verification boundary
 
