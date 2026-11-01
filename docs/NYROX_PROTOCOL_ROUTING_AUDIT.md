@@ -63,3 +63,13 @@ Build quest-state tracking and NPC dialogue decision support on top of the newly
 - The event timeline includes protocol event type, UTC timestamp, and bounded schema-field diagnostics. String values and byte payloads are omitted; numeric and enum values are shown with their generated schema labels.
 - Generated labels such as `eatl`, `ecck`, or `ecdi` are not assigned guessed meanings. This is protocol observability, not quest progression, NPC reply automation, or a dungeon runner.
 - The store is session-local and memory-only; it resets with the account client and is capped at 100 events / 32 fields per event.
+
+## Dofus-like desktop interface
+
+- The desktop adds a per-account game-interface window with Dialogue, Inventory, and Exchange tabs. It is opened from the F10 Admin panel for a selected account.
+- Authenticated endpoint: `GET /api/v1/accounts/{id}/game-interface`. Inventory and Kamas are read from the live `BotGameClient.Inventory` snapshot; item names, levels, and icon IDs come from the existing item datacenter when available.
+- Dialogue view observes `NpcDialogCreationEvent`, `NpcDialogQuestionEvent`, and `DialogLeaveEvent`. It renders received text strings and the actual reply IDs / enabled flags from the generated schema. NPC display name localization is not yet resolved; the UI shows the NPC numeric ID.
+- Dialogue reply buttons currently select/highlight a choice only. No `NpcDialogReplyRequest` is sent: the exact semantic mapping for both `ReplyId` and `ReplyId2` has not been proven.
+- Exchange view observes request/start/object-added/ready/leave events. It shows the live inventory, observed offer objects, partner character ID when present, and Ready states. The current protocol observer does not yet distinguish both sides' item ownership reliably, so the panel labels the list `Observed offer` instead of inventing left/right ownership.
+- Exchange move/accept/ready actions remain disabled pending full protocol-state validation and explicit guard design. This window is an observer UI, not an exchange automation feature.
+- The observer is side-channel only and returns false so existing game handlers continue to process messages. No additional game socket or protocol injection path is created.
