@@ -29,7 +29,7 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 - Read-only Game Data Explorer for local item, monster and achievement datacenters (search capped at 50 results).
 - Extended account selection and confirmed bulk scheduler start/stop for selected accounts.
 - Separate live Task Monitor window showing active callbacks and graceful stop controls.
-- Read-only Protocol Sniffer opened from the F10 Admin panel: live per-account incoming protocol type names and counts plus unhandled domain event type names/counts, refreshed every two seconds for the current session. It does not capture/store payloads or produce PCAP files.
+- Protocol Sniffer opened from the F10 Admin panel: live message-type counters plus explicit Start/Stop/Clear controls for decoded protobuf application payload capture in both directions. Payloads are shown as bounded hex in the UI, kept in memory only (max 200 entries / 1 MiB / 4 KiB per payload), and never written to disk or exported as PCAP. Authentication, login, token, credential, password, account, session, chat and private-message type names are excluded. Capture is off by default.
 - Read-only Map Cells inspector opened from the F10 Admin panel: render the live 560-cell map in its isometric grid, inspect cell IDs/coordinates, walkability, line of sight, floor, occupancy, interactive element IDs and their GFX/interaction metadata plus enabled skill IDs/instance UIDs, arrow and raw map-change metadata; show verified adjacent map IDs and world-graph transition directions.\n- Read-only Route Planner: load the existing `BubbleBot.Cli/Data/maps.json` file on demand and preview shortest paths across cardinal map-neighbour links. The 98 MB map file is deliberately not bundled into the desktop ZIP.
 - Three-second refresh of accounts, profiles, scheduler count and recent logs.
 
@@ -55,7 +55,7 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 - Binds only to `127.0.0.1:48621`.
 - Every request requires `X-NYROX-Token`.
 - The token is generated from 48 cryptographically random bytes and protected with Windows DPAPI for the current user under `%LOCALAPPDATA%\NYROX\control.token`.
-- API routes cover status, live accounts, read-only map-cell snapshots and protocol-observer snapshots, script listing/loading/stopping, account connection/disconnection, profile create/list/delete, scheduler status/start/stop and recent logs.
+- API routes cover status, live accounts, read-only map-cell snapshots, protocol type observer and explicitly controlled packet-capture start/stop/clear/snapshot endpoints, script listing/loading/stopping, account connection/disconnection, profile create/list/delete, scheduler status/start/stop and recent logs.
 - No CORS policy or public listener is enabled.
 - The map-cell endpoint returns current-session runtime data only; raw `MapChangeData` and cell arrows are exposed as metadata, not asserted to identify a specific door unless the game data confirms it.
 - The first desktop release has one local owner/admin token. Viewer/Operator role provisioning, audit history and remote control are not implemented. The F10 panel is a companion desktop window, not code injected into the game.
@@ -67,6 +67,14 @@ The `NYROX Desktop build` GitHub Actions workflow builds the full solution on pu
 - The desktop app uses the existing `BotManager` and `BotGameClient` runtime from the CLI assembly; it does not start a second game engine.
 - Editable route execution, Zaap/dungeon/door transitions, quest/dungeon workflow management, installer/updater and a true in-game-rendered admin overlay remain future work. The route preview is not a movement command and does not model transition criteria or a character's live position.
 - No live game scripts are started automatically at application launch.
+
+## Packet capture boundaries
+
+- Capture is opt-in and disabled on every new account session until Start capture is pressed.
+- It records only decoded application payload bytes from the existing authenticated game client transport; it does not create another socket, install a proxy, intercept other processes, bypass TLS, or capture raw network frames.
+- Authentication/login/token/credential/password/account/session/chat/private message type names are excluded before storing payload bytes. This type-name filter is a conservative guard, not a formal guarantee that every remaining game payload is free of personal data; inspect before sharing.
+- Entries are memory-only, capped at 200 packets, 4 KiB per payload and 1 MiB total. Clear removes the in-memory buffer; Stop prevents new entries.
+- The payload view displays the protobuf Any.Value bytes as hex. It is not yet a complete PCAP/Wireshark export and does not decode every protobuf field into named properties.
 
 ## Security
 
