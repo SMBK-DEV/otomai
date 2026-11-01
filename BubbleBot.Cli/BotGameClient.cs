@@ -711,6 +711,29 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     public IReadOnlyCollection<int> GetObservedCompletedAchievementIds() =>
         State.ObservedCompletedAchievementIds.OrderBy(x => x).ToArray();
 
+    /// <summary>
+    /// Records only the type name of an unmapped quest/dialogue/dungeon-related
+    /// protocol event. Payloads are deliberately not retained.
+    /// </summary>
+    public void RecordUnmappedDomainEvent(string? typeFullName)
+    {
+        if (string.IsNullOrWhiteSpace(typeFullName) ||
+            !System.Text.RegularExpressions.Regex.IsMatch(
+                typeFullName, "Quest|Npc|Dialog|Dungeon|Challenge|Achievement",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            return;
+
+        if (State.ObservedUnmappedDomainEvents.Count >= 100 &&
+            !State.ObservedUnmappedDomainEvents.ContainsKey(typeFullName))
+            return;
+
+        State.ObservedUnmappedDomainEvents[typeFullName] =
+            State.ObservedUnmappedDomainEvents.GetValueOrDefault(typeFullName) + 1;
+    }
+
+    public IReadOnlyDictionary<string, int> GetObservedUnmappedDomainEvents() =>
+        new Dictionary<string, int>(State.ObservedUnmappedDomainEvents, StringComparer.Ordinal);
+
     public void KoliRegister()
     {
         _workflowService.KoliRegister();
