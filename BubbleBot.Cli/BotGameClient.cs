@@ -732,6 +732,26 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     public IReadOnlyDictionary<string, int> GetObservedUnmappedDomainEvents() =>
         new Dictionary<string, int>(State.ObservedUnmappedDomainEvents, StringComparer.Ordinal);
 
+    /// <summary>
+    /// Records incoming protocol type names before handler dispatch. This is a
+    /// bounded, payload-free session diagnostic, not decoded game state.
+    /// </summary>
+    public void RecordObservedProtocolEvent(string? typeFullName)
+    {
+        if (string.IsNullOrWhiteSpace(typeFullName))
+            return;
+
+        if (State.ObservedProtocolEvents.Count >= 200 &&
+            !State.ObservedProtocolEvents.ContainsKey(typeFullName))
+            return;
+
+        State.ObservedProtocolEvents[typeFullName] =
+            State.ObservedProtocolEvents.GetValueOrDefault(typeFullName) + 1;
+    }
+
+    public IReadOnlyDictionary<string, int> GetObservedProtocolEvents() =>
+        new Dictionary<string, int>(State.ObservedProtocolEvents, StringComparer.Ordinal);
+
     public void KoliRegister()
     {
         _workflowService.KoliRegister();
