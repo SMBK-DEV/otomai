@@ -253,6 +253,57 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
             }
             return DynValue.NewTable(results);
         }));
+        t.Set("getItem", DynValue.NewCallback((_, args) =>
+        {
+            if (!TryGetNumber(args, 0, out var id) || id < ushort.MinValue || id > ushort.MaxValue)
+                return DynValue.Nil;
+
+            var item = ItemDatacenterRepository.Get((ushort)id);
+            if (item is null) return DynValue.Nil;
+
+            var row = new Table(script);
+            row.Set("id", DynValue.NewNumber(item.Id));
+            row.Set("name", DynValue.NewString(DatacenterService.GetText(item.NameId)));
+            row.Set("description", DynValue.NewString(DatacenterService.GetText(item.DescriptionId)));
+            row.Set("typeId", DynValue.NewNumber(item.TypeId));
+            row.Set("level", DynValue.NewNumber(item.Level));
+            row.Set("weight", DynValue.NewNumber(item.RealWeight));
+            row.Set("price", DynValue.NewNumber(item.Price));
+            row.Set("usable", DynValue.NewBoolean(item.Usable));
+            row.Set("exchangeable", DynValue.NewBoolean(item.Exchangeable));
+            row.Set("saleable", DynValue.NewBoolean(item.IsSaleable));
+            row.Set("cursed", DynValue.NewBoolean(item.Cursed));
+            row.Set("criteria", DynValue.NewString(item.Criteria));
+            row.Set("recipeSlots", DynValue.NewNumber(item.RecipeSlots));
+            var drops = new Table(script);
+            for (var i = 0; i < item.DropMonsterIds.Count; i++)
+                drops.Set(i + 1, DynValue.NewNumber(item.DropMonsterIds[i]));
+            row.Set("dropMonsterIds", DynValue.NewTable(drops));
+            return DynValue.NewTable(row);
+        }));
+        t.Set("searchItems", DynValue.NewCallback((_, args) =>
+        {
+            if (args.Count == 0 || args[0].Type != DataType.String)
+                return DynValue.NewTable(new Table(script));
+
+            var limit = 20;
+            if (TryGetNumber(args, 1, out var requestedLimit))
+                limit = (int)Math.Clamp(requestedLimit, 1, 50);
+
+            var results = new Table(script);
+            var index = 1;
+            foreach (var item in ItemDatacenterRepository.Search(args[0].String, limit))
+            {
+                var row = new Table(script);
+                row.Set("id", DynValue.NewNumber(item.Id));
+                row.Set("name", DynValue.NewString(DatacenterService.GetText(item.NameId)));
+                row.Set("typeId", DynValue.NewNumber(item.TypeId));
+                row.Set("level", DynValue.NewNumber(item.Level));
+                row.Set("usable", DynValue.NewBoolean(item.Usable));
+                results.Set(index++, DynValue.NewTable(row));
+            }
+            return DynValue.NewTable(results);
+        }));
         return t;
     }
 
