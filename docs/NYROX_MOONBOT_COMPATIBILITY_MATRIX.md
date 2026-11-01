@@ -21,6 +21,7 @@ The adapter registers the documented Lua global names only where BubbleBot has a
 | character.name() | CharacterInfo.Name | Character display name |
 | character.level() | CharacterBasicInformation.Level | Character level, nil before character info |
 | character.cellId() | CharacterInfo.CellId | Current cell |
+| character.kamas() | Inventory.Kamas | Current carried kamas |
 | fight.isInFight() | BotGameClient.IsInFight | Current fight state |
 | inventory.list() | Inventory.Items + datacenter templates | UID/GID/template ID/quantity/position/name/type/weight/level/equipped snapshot |
 | inventory.countItem(gid) | Inventory.Items quantity sum by template ID | Total quantity for a template ID |
@@ -43,7 +44,7 @@ These NYROX functions currently have no verified matching BubbleBot service/stat
 - `gameData.getDungeons`, `getDungeon`, `searchDungeons`, `getChallenges`, `getMapCells`, `getQuest`, `getAchievement`.
 - `map.npcs`, `getInteractives`, `interactiveObjects`, `monsterGroups`, `fightGroup`, `door`, `exitDungeon`, `waitForMapChange`.
 - `fight.getChallenges`, `getChallengeResult`.
-- `character.hpPercent`, `lifePoints`, `maxLifePoints`, `podsPercent`, `kamas`.
+- `character.hpPercent`, `lifePoints`, `maxLifePoints`, `podsPercent`, `xp`.
 - `global.addInMemory`, `global.remember`, `files.writeJson`, `files.append`.
 
 These functions are deliberately absent, rather than stubbed to return success or fabricated data. The supplied NYROX engine checks API availability and uses protected calls, so unsupported branches should log/hold rather than claim completion.
