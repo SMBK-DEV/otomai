@@ -102,7 +102,7 @@ internal sealed class ControlApiHost : IAsyncDisposable
             return Results.Ok(scripts);
         });
 
-        app.MapPost("/api/v1/accounts/{id}/scripts/load", (string id, ScriptLoadRequest request) =>
+        app.MapPost("/api/v1/accounts/{id}/scripts/load", async (string id, ScriptLoadRequest request) =>
         {
             if (string.IsNullOrWhiteSpace(request.Path) || request.Path.Length > 240)
                 return Results.BadRequest(new { error = "Invalid script path." });
@@ -110,7 +110,7 @@ internal sealed class ControlApiHost : IAsyncDisposable
             if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
                 return Results.NotFound(new { error = "Account is not present in the live runtime." });
 
-            _scheduler.StopAsync(id).GetAwaiter().GetResult();
+            await _scheduler.StopAsync(id);
             var result = client.LoadLuaScriptFromFile(request.Path);
             _logs.Write(result.Succeeded ? "Information" : "Error", id,
                 result.Succeeded ? $"Lua script loaded: {request.Path}" : $"Lua script load failed: {result.Error}");
