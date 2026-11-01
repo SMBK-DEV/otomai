@@ -57,6 +57,12 @@ public partial class AdminPanelWindow : Window
         finally { _refreshing = false; }
     }
 
+    private void AccountsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (SelectedAccount is not { } account) return;
+        SelectedAccountText.Text = $"{account.Character} • {account.Id}\\nLevel {account.Level?.ToString() ?? "?"} • {(account.Connected ? "Connected" : "Disconnected")} • {(account.InFight ? "In fight" : "Not fighting")}";
+    }
+
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await RefreshDataAsync();
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
