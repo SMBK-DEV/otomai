@@ -115,6 +115,40 @@ public static class ProtocolPayloadDecoder
                 continue;
             }
 
+            if (fieldValue is IDictionary dictionary)
+            {
+                var index = 0;
+                foreach (DictionaryEntry entry in dictionary)
+                {
+                    if (index >= MaxCollectionItems || output.Count >= MaxFields)
+                        break;
+
+                    var key = Convert.ToString(entry.Key, System.Globalization.CultureInfo.InvariantCulture) ?? index.ToString();
+                    var childPath = $"{path}[{key}]";
+                    var childValue = entry.Value;
+                    if (childValue is null)
+                    {
+                        output.Add(new ProtocolDecodedField(attribute.Tag, childPath, "null", "(null)"));
+                    }
+                    else if (childValue.GetType().IsEnum || childValue is bool or byte or sbyte or short or ushort or int or uint or long or ulong or float or double)
+                    {
+                        output.Add(new ProtocolDecodedField(attribute.Tag, childPath, childValue.GetType().Name,
+                            Convert.ToString(childValue, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty));
+                    }
+                    else if (childValue is string childText)
+                    {
+                        output.Add(new ProtocolDecodedField(attribute.Tag, childPath, "string",
+                            $"[string value omitted; {childText.Length} chars]"));
+                    }
+                    else
+                    {
+                        AppendFields(childValue, childPath, depth + 1, output);
+                    }
+                    index++;
+                }
+                continue;
+            }
+
             if (fieldValue is IEnumerable sequence)
             {
                 var index = 0;
