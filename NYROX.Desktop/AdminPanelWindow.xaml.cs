@@ -39,7 +39,10 @@ public partial class AdminPanelWindow : Window
         {
             var status = await _api.GetAsync<EngineStatus>("api/v1/status");
             var accounts = await _api.GetAsync<List<AccountStatus>>("api/v1/accounts") ?? [];
+            var selectedId = SelectedAccount?.Id;
             AccountsGrid.ItemsSource = accounts;
+            if (selectedId is not null)
+                AccountsGrid.SelectedItem = accounts.FirstOrDefault(x => string.Equals(x.Id, selectedId, StringComparison.OrdinalIgnoreCase));
             AccountCountText.Text = accounts.Count.ToString();
             ConnectedCountText.Text = accounts.Count(x => x.Connected).ToString();
             ScheduledCountText.Text = (status?.ScheduledCallbacks ?? 0).ToString();
