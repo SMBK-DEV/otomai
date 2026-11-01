@@ -82,7 +82,8 @@ internal sealed class ScriptScheduler : IAsyncDisposable
     public async Task<bool> StopAsync(string accountId)
     {
         if (!_running.TryGetValue(accountId, out var running)) return false;
-        running.Cancellation.Cancel();
+        try { running.Cancellation.Cancel(); }
+        catch (ObjectDisposedException) { return true; }
         if (running.Worker is not null)
         {
             try { await running.Worker.WaitAsync(TimeSpan.FromSeconds(5)); }
