@@ -182,3 +182,23 @@ The generated source comments identify input filenames such as `hlc.proto`, `hlg
 - Do not label dialogue integer fields as NPC ID, question ID, or reply-selection mode without equivalent evidence.
 - Do not send `NpcDialogReplyRequest` based solely on this shape; both required reply fields must be understood and validated first.
 - The next safe implementation step is to capture payload-free event occurrence counts during a user-authorized normal session, then obtain an approved schema/fixture or a controlled comparison that can establish field meanings. No live session was started for this audit.
+
+
+## Local quest datacenter availability
+
+A repository-tree and source inspection found that the current datacenter model folder contains only these quest-related static models:
+
+- `Achievements` — achievement templates from `data_assets_achievementsroot.asset.bundle`.
+- `AchievementObjectives` — achievement objective templates from `data_assets_achievementobjectivesroot.asset.bundle`.
+- `TreasureHunt/PointOfInterest` — treasure-hunt point metadata.
+
+There is currently no checked-in `Quests`, `QuestSteps`, or `QuestObjectives` datacenter model/repository in this project, and no quest JSON catalogue under `BubbleBot.Cli/Data`. The generic `DatacenterService.Load<T>()` can load a model only after a matching model contract and source bundle filename are known; it does not make quest metadata available automatically.
+
+Consequences for the implementation:
+
+1. Achievement templates and achievement objective templates must not be mistaken for quest templates or quest progress.
+2. A static quest catalogue cannot yet be exposed through `gameData` from the current repository contents.
+3. The next data prerequisite is a legitimate Dofus Unity client datacenter schema/asset definition for quest, quest-step, and quest-objective records, including their localized text references and relation keys.
+4. Until that source exists, quest automation should be driven only by confirmed live server state and verified protocol semantics; do not synthesize quest names, steps, NPCs, or objective IDs from achievement records.
+
+This finding is a source-tree inspection, not a claim that the installed game client lacks those assets.
