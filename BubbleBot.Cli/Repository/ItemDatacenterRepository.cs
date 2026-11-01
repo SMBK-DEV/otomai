@@ -23,7 +23,7 @@ internal static class ItemDatacenterRepository
         try
         {
             return ItemsById.Value.Values
-                .Where(item => DatacenterService.GetText(item.NameId)
+                .Where(item => DatacenterService.GetText(unchecked((uint)item.NameId))
                     .Contains(query, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(item => DatacenterService.GetText(item.NameId), StringComparer.OrdinalIgnoreCase)
                 .Take(Math.Clamp(limit, 1, 50))
