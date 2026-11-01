@@ -71,6 +71,28 @@ public sealed class DofusInterfaceStateStore
                     }
                     break;
 
+                case ExchangeObjectsModifiedEvent modified:
+                    _exchangeActive = true;
+                    _exchangeItems.Clear();
+                    foreach (var item in modified.Eflqs)
+                    {
+                        var raw = item.Item;
+                        var template = SafeGetTemplate(raw.Gid);
+                        _exchangeItems[raw.Uid] = new DofusExchangeItemSnapshot(
+                            raw.Uid, raw.Gid, raw.Quantity, template?.Name ?? $"Item #{raw.Gid}",
+                            template?.IconId ?? 0, item.Position);
+                    }
+                    break;
+
+                case ExchangeObjectsRemovedEvent removed:
+                    foreach (var uid in removed.Efuhs)
+                        _exchangeItems.Remove(uid);
+                    break;
+
+                case ExchangeObjectRemovedEvent removed:
+                    _exchangeItems.Remove(removed.Efyk);
+                    break;
+
                 case ExchangeReadyEvent ready:
                     _exchangeActive = true;
                     _exchangeReady[ready.CharacterId] = ready.Ready;
