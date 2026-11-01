@@ -95,6 +95,47 @@
                     </Border>
                 </Grid>
             </TabItem>
+            <TabItem Header="Quest &amp; NPC">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                            BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,6,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="RECENT VERIFIED QUEST / NPC EVENTS • LAST 100"
+                                       FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <DataGrid x:Name="QuestNpcEventsGrid" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
+                                      Background="#0D141C" Foreground="{StaticResource TextPrimary}" RowBackground="#111A24"
+                                      AlternatingRowBackground="#14202B" BorderBrush="{StaticResource PanelBorder}"
+                                      GridLinesVisibility="Horizontal" HeadersVisibility="Column">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Time (UTC)" Binding="{Binding Timestamp, StringFormat={}{0:HH:mm:ss.fff}}" Width="115"/>
+                                    <DataGridTextColumn Header="Protocol event" Binding="{Binding Type}" Width="190"/>
+                                    <DataGridTextColumn Header="Schema fields (opaque labels)" Binding="{Binding FieldSummary}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+                    </Border>
+                    <Border Grid.Column="1" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource PanelBorder}"
+                            BorderThickness="1" CornerRadius="6" Padding="10" Margin="6,0,0,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="EVENT COUNTS • CURRENT SESSION"
+                                       FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <DataGrid x:Name="QuestNpcCountsGrid" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
+                                      Background="#0D141C" Foreground="{StaticResource TextPrimary}" RowBackground="#111A24"
+                                      AlternatingRowBackground="#14202B" BorderBrush="{StaticResource PanelBorder}"
+                                      GridLinesVisibility="Horizontal" HeadersVisibility="Column">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Event" Binding="{Binding Type}" Width="*"/>
+                                    <DataGridTextColumn Header="Count" Binding="{Binding Count}" Width="65"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
             <TabItem Header="Handler routing">
                 <Grid Margin="10">
                     <DataGrid x:Name="RoutingGrid" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
