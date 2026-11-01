@@ -40,8 +40,8 @@ These NYROX functions currently have no verified matching BubbleBot service/stat
 
 - `quest.getActiveQuests`, `getCompletedQuests`, `isQuestActive`, `isQuestCompleted`, `getCurrentStep`, `getQuestName`, `getQuestSteps`, `getObjectives`, `requestStepInfo`.
 - `npc.isInDialog`, `getQuestionText`, `getQuestionId`, `getResponseTexts`, `getResponses`, `npc`, `reply`, `leaveDialog`, `npcBank`.
-- `inventory` item effects are not fully exposed; complete equipment-effect scoring is unsupported.
-- `gameData.getDungeons`, `getDungeon`, `searchDungeons`, `getChallenges`, `getMapCells`, `getQuest`, `getAchievement`.
+- `inventory` item effects are not fully exposed; complete equipment-effect scoring is unsupported. `inventory.list`, `countItem`, guarded `equipItem`, and guarded `useItemByGID` are implemented in this host.
+- `gameData.getDungeons`, `getDungeon`, `searchDungeons`, `getChallenges`, `getMapCells`, `getQuest`, `getAchievement` are not exposed by this BubbleBot host. The supplied Unity reference documents the dungeon/challenge methods, but they still need a real data-service adapter. Quest/achievement static Game Data lookups are documented as stubs on Unity.
 - `map.npcs`, `getInteractives`, `interactiveObjects`, `monsterGroups`, `fightGroup`, `door`, `exitDungeon`, `waitForMapChange`.
 - `fight.getChallenges`, `getChallengeResult`.
 - `character.hpPercent`, `lifePoints`, `maxLifePoints`, `podsPercent`, `xp`.
@@ -60,5 +60,5 @@ These functions are deliberately absent, rather than stubbed to return success o
 - Explicit callback invocation: implemented through `InvokeLuaCallback(name, ...)`.
 - Disconnect cleanup: implemented.
 - MoonBot Unity subset: implemented as listed above.
-- Full NYROX quest/dungeon engine compatibility: **not complete**. Missing quest, NPC/dialogue, inventory action, challenge, and Game Data APIs prevent the current NYROX engine from completing its intended workflow.
+- Full NYROX quest/dungeon engine compatibility: **not complete**. Missing quest-state, NPC/dialogue, dungeon Game Data, monster-group, challenge-state and dungeon-transition APIs prevent the current NYROX engine from completing its intended workflow. Basic inventory snapshots/counting and guarded equip/use operations are implemented.
 - Live Dofus testing: not performed.
