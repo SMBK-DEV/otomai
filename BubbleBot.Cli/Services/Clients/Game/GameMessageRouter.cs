@@ -8,6 +8,11 @@ internal sealed class GameMessageRouter : IClientMessageRouter
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, RouteCounter>> ObservedRoutes =
         new(StringComparer.OrdinalIgnoreCase);
 
+    internal static void ResetObservedRoutes(string accountId)
+    {
+        ObservedRoutes[accountId] = new ConcurrentDictionary<string, RouteCounter>(StringComparer.Ordinal);
+    }
+
     internal static IReadOnlyList<ProtocolHandlerRouteSnapshot> GetObservedRoutes(string accountId)
     {
         if (!ObservedRoutes.TryGetValue(accountId, out var routes))
