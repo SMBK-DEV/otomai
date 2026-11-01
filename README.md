@@ -2,26 +2,33 @@
 
 Desktop control center and Dofus Unity protocol-observation tooling.
 
-## Operations Center
+## Unified Operations Center
 
-Open **Operations Center** from the desktop navigation. It provides a local workspace for:
+Open **Operations Center** from the desktop navigation. It centralizes:
 
-- Account registry and a registration preparation queue.
+- Shared account registry and account-creation task queue.
+- Existing account-creation projects: `BubbleBot.AccountCreation` and `tools/account-creator`.
+- Registration completion hand-off into the shared account registry.
 - Proxy endpoint profiles and planned account assignment.
 - Subscription ledger for PaySafeCard, Ogrines and other methods.
 - Character creation plans.
 - Runtime account snapshot and shortcuts to F10 Admin and Map Cells.
 
-Workspace data is stored under `%LocalAppData%\\NYROX\\operations.json`. The workspace intentionally does not store game passwords, PaySafeCard PINs, proxy authentication secrets, or other payment credentials.
+### Existing account creator
+
+Account creation was already part of the repository; Operations Center does not replace it with a second creator. The registration panel records the task and opens the official Ankama account portal. A completed registration can be promoted into the shared NYROX account registry.
+
+The existing account-creation sources contain automated identity, proxy, email-verification and anti-bot challenge handling. This desktop panel does not invoke challenge bypass, CAPTCHA-solving, bulk account generation, identity fabrication, or anti-abuse evasion. Registration and identity verification should be completed through Ankama's official flow.
 
 ### Integration boundaries
 
-The account registration queue is a checklist; actual registration and identity checks remain on Ankama's official account site. Proxy entries are configuration records only and are not yet attached to the authenticated game transport. Subscription entries are a ledger/reminder, not a payment processor. Ogrine auto-renewal is not enabled until a supported official purchase flow and confirmation protocol are verified. Character entries are plans and do not create characters in-game.
+Proxy entries are configuration records only and are not yet attached to the authenticated game transport. Subscription entries are a ledger/reminder, not a payment processor. Ogrine auto-renewal is not enabled until an officially supported purchase flow and confirmation protocol are verified. Character entries are plans and do not create characters in-game.
 
 Existing runtime actions remain in the main dashboard and F10 Admin: connect/disconnect, Lua load/stop, scheduler controls, Dofus interface observer, Map Cells inspector, and protocol sniffer. Do not treat observer-only protocol snapshots as permission to send unverified game actions.
 
-## Security
+## Local data and security
 
+- Operations workspace: `%LocalAppData%\\NYROX\\operations.json`.
+- The workspace does not store game passwords, PaySafeCard PINs, proxy authentication secrets, or payment credentials.
 - Local Control API binds to loopback and requires the per-user token.
 - Token storage uses Windows DPAPI.
-- Do not paste or store payment PINs, passwords, or proxy credentials in the Operations Center.
