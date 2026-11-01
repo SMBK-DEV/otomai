@@ -55,8 +55,6 @@ internal sealed class GameMessageRouter : IClientMessageRouter
     {
         _notifications.LogInfo("RCV: {Event}", typeFullName);
         _owner.LastMessageReceived = DateTime.UtcNow;
-        _owner.RecordUnmappedDomainEvent(typeFullName);
-
         if (typeFullName == nameof(MapMovementConfirmResponse))
         {
             _owner.Map?.OnMapMovementConfirmResponse();
@@ -76,5 +74,8 @@ internal sealed class GameMessageRouter : IClientMessageRouter
                 return;
             }
         }
+
+        // Record only messages that no registered handler consumed.
+        _owner.RecordUnmappedDomainEvent(typeFullName);
     }
 }
