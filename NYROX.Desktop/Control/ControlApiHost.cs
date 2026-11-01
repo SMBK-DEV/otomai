@@ -163,6 +163,10 @@ internal sealed class ControlApiHost : IAsyncDisposable
             try
             {
                 AccountService.Instance.LoadAccounts();
+                var configuredAccount = AccountService.Instance.GetAccount(request.Username);
+                if (configuredAccount is null || !configuredAccount.ToLoad)
+                    return Results.NotFound(new { error = "Account is not present or not enabled in the local BubbleBot account configuration." });
+
                 await BotManager.Instance.AddBot(request.Username);
                 _logs.Write("Information", "Accounts", $"Connection requested for account {request.Username}.");
                 return Results.Accepted(value: new { accepted = true, username = request.Username,
