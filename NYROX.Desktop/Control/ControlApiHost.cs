@@ -220,7 +220,9 @@ internal sealed class ControlApiHost : IAsyncDisposable
         app.MapPost("/api/v1/accounts/{id}/scheduler/stop", async (string id) =>
         {
             var stopped = await _scheduler.StopAsync(id);
-            return Results.Ok(new { stopped });
+            if (!stopped && _scheduler.IsRunning(id))
+                return Results.Conflict(new { stopped = false, error = "The Lua callback has not returned yet; the scheduler remains locked against overlap." });
+            return Results.Ok(new { stopped = true });
         });
 
         app.MapGet("/api/v1/logs", (int? limit) =>
