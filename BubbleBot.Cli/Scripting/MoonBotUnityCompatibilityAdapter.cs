@@ -263,7 +263,7 @@ internal sealed class MoonBotUnityCompatibilityAdapter : ILuaApiAdapter
 
             var row = new Table(script);
             row.Set("id", DynValue.NewNumber(item.Id));
-            row.Set("name", DynValue.NewString(DatacenterService.GetText(item.NameId)));
+            row.Set("name", DynValue.NewString(DatacenterService.GetText(unchecked((uint)item.NameId))));
             row.Set("description", DynValue.NewString(DatacenterService.GetText(item.DescriptionId)));
             row.Set("typeId", DynValue.NewNumber(item.TypeId));
             row.Set("level", DynValue.NewNumber(item.Level));
