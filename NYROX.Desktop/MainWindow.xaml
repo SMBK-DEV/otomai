@@ -120,6 +120,7 @@
                             <Button Content="Save profile from selected script" Click="SaveProfile_Click" Margin="0,8,0,8"/>
                             <TextBlock Text="Saved profiles" Foreground="{StaticResource TextMuted}" FontSize="10"/>
                             <ComboBox x:Name="ProfileCombo" Height="30" Margin="0,5,0,8" Background="#0D141C" Foreground="#101820" SelectionChanged="ProfileCombo_SelectionChanged"/>
+                            <Button Content="Delete selected profile" Click="DeleteProfile_Click" Margin="0,0,0,8"/>
                             <WrapPanel>
                                 <Button Content="Start schedule" Click="StartSchedule_Click"/>
                                 <Button Content="Stop schedule" Click="StopSchedule_Click"/>
