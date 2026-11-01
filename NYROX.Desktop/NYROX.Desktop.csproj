@@ -11,4 +11,20 @@
     <AssemblyName>NYROX.Desktop</AssemblyName>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BubbleBot.Cli\BubbleBot.Cli.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\BubbleBot.Cli\Scripts\**\*.lua">
+      <Link>Scripts\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
