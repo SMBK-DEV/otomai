@@ -149,10 +149,17 @@ internal sealed class GameNavigationService
     {
         LogInfo("On veut allez sur la map {MapId} depuis la map {MapId}", edge.To.MapId, edge.From.MapId);
 
-        var transition = edge.Transitions.FirstOrDefault();
+        // World-graph edges can contain transition kinds that this client does not
+        // execute yet (MapEvent, MapObstacle, NpcAction). Do not let an unsupported
+        // first entry hide a later transition kind that has an implemented executor.
+        var transition = edge.Transitions.FirstOrDefault(IsExecutableTransition);
         if (transition == null)
         {
-            Log.Logger.Warning("No transition found for edge {Edge}", edge);
+            Log.Logger.Warning(
+                "No executable transition found for edge {FromMapId} -> {ToMapId}; transition types: {TransitionTypes}",
+                edge.From.MapId,
+                edge.To.MapId,
+                string.Join(", ", edge.Transitions.Select(item => item.Type)));
             return;
         }
 
@@ -199,6 +206,15 @@ internal sealed class GameNavigationService
                 Map?.UseInteractive((int)transition.Id, transition.SkillId, transition.CellId);
                 break;
         }
+    }
+
+    private static bool IsExecutableTransition(WorldGraphTransition transition)
+    {
+        return (TransitionTypeEnum)transition.Type is
+            TransitionTypeEnum.Scroll or
+            TransitionTypeEnum.ScrollAction or
+            TransitionTypeEnum.MapAction or
+            TransitionTypeEnum.Interactive;
     }
 
     private int GetClosestTransitionCellId(int direction)
