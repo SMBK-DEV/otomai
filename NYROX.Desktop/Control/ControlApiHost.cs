@@ -110,6 +110,7 @@ internal sealed class ControlApiHost : IAsyncDisposable
             if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
                 return Results.NotFound(new { error = "Account is not present in the live runtime." });
 
+            _scheduler.StopAsync(id).GetAwaiter().GetResult();
             var result = client.LoadLuaScriptFromFile(request.Path);
             _logs.Write(result.Succeeded ? "Information" : "Error", id,
                 result.Succeeded ? $"Lua script loaded: {request.Path}" : $"Lua script load failed: {result.Error}");
