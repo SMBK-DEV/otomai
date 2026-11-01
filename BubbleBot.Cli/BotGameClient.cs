@@ -23,6 +23,8 @@ using Discord;
 
 namespace BubbleBot.Cli;
 
+public sealed record ProtocolHandlerRouteSnapshot(string Type, string Handler, int Count);
+
 public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
 {
     public const bool Debug = false;
@@ -802,6 +804,10 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
 
     public IReadOnlyDictionary<string, int> GetObservedProtocolEvents() =>
         new Dictionary<string, int>(State.ObservedProtocolEvents, StringComparer.Ordinal);
+
+    /// <summary>Returns the current-session message-to-handler routing observations.</summary>
+    public IReadOnlyList<ProtocolHandlerRouteSnapshot> GetObservedProtocolRoutes() =>
+        GameMessageRouter.GetObservedRoutes(BotId);
 
     /// <summary>In-memory packet payload capture; disabled by default and bounded.</summary>
     public PacketCaptureStore PacketCapture => _packetCaptureStore;
