@@ -788,6 +788,53 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     }
 
     /// <summary>
+    /// Requests a read-only HDV item search in an already opened buyer interface.
+    /// Purchases are deliberately not part of this operation.
+    /// </summary>
+    public bool SearchBidHouseItem(int gid, out string error)
+    {
+        if (gid <= 0)
+        {
+            error = "Item GID must be positive.";
+            return false;
+        }
+
+        if (!Connected || !IsConnected)
+        {
+            error = "Account is not connected to the game server.";
+            return false;
+        }
+
+        if (IsInFight)
+        {
+            error = "HDV search is unavailable during a fight.";
+            return false;
+        }
+
+        if (DofusInterfaceState.Snapshot(CharacterId).BidHouse.Open is false)
+        {
+            error = "Open the HDV buyer interface in game before requesting a search.";
+            return false;
+        }
+
+        if (DofusInterfaceState.Snapshot(CharacterId).Exchange.Active)
+        {
+            error = "HDV search is unavailable during an active exchange.";
+            return false;
+        }
+
+        SendRequest(new ExchangeBidHouseSearchRequest
+        {
+            ObjectGid = gid,
+            Follow = true,
+            ObjectGid2 = gid
+        }, ExchangeBidHouseSearchRequest.TypeUrl);
+
+        error = string.Empty;
+        return true;
+    }
+
+    /// <summary>
     /// Offers one complete inventory stack in an already active exchange.
     /// Quantity is taken from the live inventory snapshot; partial quantities
     /// are intentionally not exposed until their protocol semantics are reviewed.
