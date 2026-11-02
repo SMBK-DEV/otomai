@@ -50,7 +50,7 @@
                     </DataGrid>
                 </DockPanel>
             </Border>
-            <StackPanel Grid.Column="1">
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto"><StackPanel>
                 <TextBlock Text="Selected account" FontWeight="SemiBold" Margin="0,0,0,6"/>
                 <TextBlock x:Name="SelectedAccountText" Text="Select an account." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" Margin="0,0,0,12"/>
                 <Button Content="Open Dofus Interface" Click="OpenGameInterface_Click"/>
@@ -80,7 +80,7 @@
                 <TextBlock x:Name="ApiCapabilitiesText" Text="Loading API catalog…" Foreground="{StaticResource TextMuted}" FontSize="10" TextWrapping="Wrap" MaxHeight="120"/>
                 <Border Height="1" Background="{StaticResource PanelBorder}" Margin="0,8,0,10"/>
                 <TextBlock Text="Admin actions require confirmation. Stop Lua does not forcibly abort a callback already executing." Foreground="{StaticResource TextMuted}" FontSize="10" TextWrapping="Wrap"/>
-            </StackPanel>
+            </StackPanel></ScrollViewer>
         </Grid>
         <Border Grid.Row="3" Background="#0D141C" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="5" Padding="9" Margin="0,12,0,0">
             <TextBlock x:Name="StatusText" Text="Admin panel ready." Foreground="{StaticResource TextMuted}" FontSize="11"/>
