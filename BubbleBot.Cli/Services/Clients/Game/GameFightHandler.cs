@@ -36,11 +36,7 @@ internal sealed class GameFightHandler : GameClientServiceBase, IGameMessageHand
                 if (Context == ContextCreationEvent.GameContext.Fight)
                 {
                     IsInFight = false;
-                    if (FightInfo != null)
-                    {
-                        FightInfo.IsEnded = true;
-                    }
-
+                    FightInfo?.StopPendingActions();
                     FightInfo = null;
                 }
 
