@@ -208,9 +208,16 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </StackPanel>
-                            <TextBlock x:Name="ExchangeHintText" DockPanel.Dock="Right" Width="310"
-                                       Text="Vue en lecture seule. Le déplacement d'objets et la validation seront activés après validation des règles d'échange et des garde-fous."
-                                       Foreground="#E6B96A" FontSize="10" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <StackPanel DockPanel.Dock="Right" Width="340" VerticalAlignment="Center">
+                                <TextBlock x:Name="ExchangeHintText"
+                                           Text="Les offres sont observées depuis le runtime. Les actions manuelles nécessitent un échange actif et une confirmation."
+                                           Foreground="#E6B96A" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                                <DockPanel Margin="0,0,0,4">
+                                    <Button Style="{StaticResource GameButton}" Content="Offrir pile" Click="OfferExchangeStack_Click" DockPanel.Dock="Right"/>
+                                    <TextBox x:Name="ExchangeObjectUidText" ToolTip="UID de la pile dans l'inventaire" VerticalContentAlignment="Center" Padding="6,4"/>
+                                </DockPanel>
+                                <Button Style="{StaticResource GameButton}" Content="Confirmer prêt" Click="ConfirmExchangeReady_Click"/>
+                            </StackPanel>
                         </DockPanel>
                     </Border>
                 </Grid>
