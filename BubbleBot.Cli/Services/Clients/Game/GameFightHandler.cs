@@ -216,16 +216,20 @@ internal sealed class GameFightHandler : GameClientServiceBase, IGameMessageHand
     private void HandleFightEnd(FightEndEvent fightEndEvent)
     {
         IsInFight = false;
-        FightInfo = null;
         LogDiscord("Fin d'un combat");
 
         if (IsInTreasureHunt())
         {
             TreasureHuntData.OnFightEndEvent(fightEndEvent);
+            FightInfo = null;
             return;
         }
 
-        FightInfo?.OnFightEndEvent(fightEndEvent);
+        // Let the active fight state consume the end event before clearing it.
+        // Clearing FightInfo first silently skipped its final-state cleanup.
+        var endedFight = FightInfo;
+        endedFight?.OnFightEndEvent(fightEndEvent);
+        FightInfo = null;
         _workflowService.OnFightEnd();
     }
 
