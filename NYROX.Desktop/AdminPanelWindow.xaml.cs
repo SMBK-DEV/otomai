@@ -5,6 +5,17 @@ using NYROX.Desktop.Control;
 
 namespace NYROX.Desktop;
 
+internal sealed record ApiCapabilityGroup(string Name, List<string> Endpoints);
+internal sealed record ApiCapabilities(int ApiVersion, string Engine, string Authentication, string BindAddress,
+    List<ApiCapabilityGroup> Groups, string Note);
+internal sealed record RuntimeDetailSnapshot(string AccountId, string Character, int? Level, long CharacterId,
+    int ServerId, string ServerName, bool Connected, bool Stopped, bool InFight, bool IsBank, bool IsKoli,
+    bool ZaapMode, bool IsTrajetReady, bool IsWaitingPartyMembers, long? MapId, int? MapX, int? MapY,
+    int CellId, int FightTotalCount, int KoliFightDone, int SpellCount, int InventoryCount, long Kamas,
+    int AutoPathLength, int AutoPathIndex, int WorldPathLength, int CooldownTime, int MapNullCount,
+    int OccupiedStuckCounter, DateTime LastMessageReceived, long LastMessageSentUnixMs,
+    DateTime LastMapChange, DateTime LastReconnect, DateTime LastFight, DateTimeOffset UpdatedAt);
+
 public partial class AdminPanelWindow : Window
 {
     private readonly ControlApiClient _api;
@@ -40,6 +51,7 @@ public partial class AdminPanelWindow : Window
         try
         {
             var status = await _api.GetAsync<EngineStatus>("api/v1/status");
+            var capabilities = await _api.GetAsync<ApiCapabilities>("api/v1/capabilities");
             var accounts = await _api.GetAsync<List<AccountStatus>>("api/v1/accounts") ?? [];
             var selectedId = SelectedAccount?.Id;
             AccountsGrid.ItemsSource = accounts;
@@ -50,7 +62,12 @@ public partial class AdminPanelWindow : Window
             ScheduledCountText.Text = (status?.ScheduledCallbacks ?? 0).ToString();
             if (SelectedAccount is not null)
                 SelectedAccountText.Text = $"{SelectedAccount.Character} • {SelectedAccount.Id}\nLevel {SelectedAccount.Level?.ToString() ?? "?"} • {(SelectedAccount.Connected ? "Connected" : "Disconnected")} • {(SelectedAccount.InFight ? "In fight" : "Not fighting")}";
-            StatusText.Text = $"API: {status?.State ?? "unavailable"} • refreshed {DateTime.Now:T}";
+            ApiCapabilitiesText.Text = capabilities is null
+                ? "API catalog unavailable."
+                : string.Join(Environment.NewLine, capabilities.Groups.Select(group =>
+                    $"{group.Name.ToUpperInvariant()} ({group.Endpoints.Count})"));
+            await RefreshSelectedRuntimeAsync();
+            StatusText.Text = $"API: {status?.State ?? "unavailable"} • {capabilities?.Groups.Sum(group => group.Endpoints.Count) ?? 0} documented endpoints • refreshed {DateTime.Now:T}";
         }
         catch (Exception ex)
         {
@@ -59,10 +76,34 @@ public partial class AdminPanelWindow : Window
         finally { _refreshing = false; }
     }
 
-    private void AccountsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async Task RefreshSelectedRuntimeAsync()
+    {
+        if (SelectedAccount is not { } account)
+        {
+            RuntimeDetailsText.Text = "Select an account to inspect runtime state.";
+            return;
+        }
+
+        try
+        {
+            var detail = await _api.GetAsync<RuntimeDetailSnapshot>(
+                $"api/v1/accounts/{Uri.EscapeDataString(account.Id)}/runtime");
+            RuntimeDetailsText.Text = detail is null ? "No runtime details returned." :
+                $"Server: {detail.ServerName} ({detail.ServerId}) • Character ID: {detail.CharacterId}\n" +
+                $"Map: {detail.MapId?.ToString() ?? "—"} [{detail.MapX?.ToString() ?? "?"},{detail.MapY?.ToString() ?? "?"}] • Cell: {detail.CellId}\n" +
+                $"Fight: {detail.InFight} • Bank: {detail.IsBank} • Koli: {detail.IsKoli} • Zaap: {detail.ZaapMode}\n" +
+                $"Inventory: {detail.InventoryCount} • Kamas: {detail.Kamas:N0} • Spells: {detail.SpellCount}\n" +
+                $"Path: {detail.AutoPathIndex}/{detail.AutoPathLength} • World path: {detail.WorldPathLength} • Cooldown: {detail.CooldownTime}ms\n" +
+                $"Fights: {detail.FightTotalCount} • Koli: {detail.KoliFightDone} • Stuck: {detail.OccupiedStuckCounter} • Map null: {detail.MapNullCount}";
+        }
+        catch (Exception ex) { RuntimeDetailsText.Text = "Runtime details unavailable: " + ex.Message; }
+    }
+
+    private async void AccountsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (SelectedAccount is not { } account) return;
-        SelectedAccountText.Text = $"{account.Character} • {account.Id}\\nLevel {account.Level?.ToString() ?? "?"} • {(account.Connected ? "Connected" : "Disconnected")} • {(account.InFight ? "In fight" : "Not fighting")}";
+        SelectedAccountText.Text = $"{account.Character} • {account.Id}\nLevel {account.Level?.ToString() ?? "?"} • {(account.Connected ? "Connected" : "Disconnected")} • {(account.InFight ? "In fight" : "Not fighting")}";
+        await RefreshSelectedRuntimeAsync();
     }
 
     private void OpenProtocolSniffer_Click(object sender, RoutedEventArgs e)
