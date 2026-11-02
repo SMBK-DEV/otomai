@@ -104,7 +104,7 @@ public partial class GameInterfaceWindow : Window
             choice.GroupIndex, choice.GroupId, choice.ReplyId, choice.Enabled,
             $"Réponse #{choice.ReplyId}  •  groupe {choice.GroupIndex + 1}",
             choice.Enabled ? "disponible" : "désactivée")).ToList();
-        DialogueHintText.Text = "Les choix sont affichés depuis les IDs réellement reçus. L'envoi de réponse reste désactivé tant que les deux champs ReplyId / ReplyId2 ne sont pas reliés avec certitude.";
+        DialogueHintText.Text = "Les réponses actives proviennent du dernier événement NPC. Cliquez sur une réponse pour l'envoyer manuellement ; le runtime revérifie le groupe et l'ID avant envoi.";
     }
 
     private void RenderInventory(List<GameInterfaceItemDto> items)
@@ -169,12 +169,37 @@ public partial class GameInterfaceWindow : Window
         SelectedItemDetailsText.Text = item.Tooltip;
     }
 
-    private void DialogueChoice_Click(object sender, RoutedEventArgs e)
+    private async void DialogueChoice_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: DialogueChoiceView choice }) return;
-        DialogueHintText.Text = choice.Enabled
-            ? $"Choix sélectionné : réponse #{choice.ReplyId}. Aucun paquet n'a été envoyé."
-            : $"La réponse #{choice.ReplyId} est marquée comme désactivée par l'événement reçu.";
+        if (!choice.Enabled)
+        {
+            DialogueHintText.Text = $"La réponse #{choice.ReplyId} est désactivée.";
+            return;
+        }
+
+        if (MessageBox.Show(
+                $"Envoyer la réponse NPC #{choice.ReplyId} (groupe {choice.GroupIndex + 1}) ?",
+                "Confirmer la réponse NPC",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            using var response = await _api.PostAsync(
+                $"api/v1/accounts/{Uri.EscapeDataString(_accountId)}/dialogue/reply",
+                new { groupIndex = choice.GroupIndex, replyId = choice.ReplyId });
+            var body = await response.Content.ReadAsStringAsync();
+            DialogueHintText.Text = response.IsSuccessStatusCode
+                ? $"Réponse #{choice.ReplyId} acceptée par le runtime. Actualisation du dialogue…"
+                : $"Réponse refusée : {body}";
+            await RefreshDataAsync();
+        }
+        catch (Exception ex)
+        {
+            DialogueHintText.Text = "Échec de l'envoi : " + ex.Message;
+        }
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await RefreshDataAsync();
