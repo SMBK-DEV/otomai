@@ -106,7 +106,7 @@ internal sealed class ControlApiHost : IAsyncDisposable
             groups = new[]
             {
                 new { name = "runtime", endpoints = new[] { "GET /api/v1/status", "GET /api/v1/accounts", "GET /api/v1/accounts/{id}/runtime", "GET /api/v1/logs" } },
-                new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
+                new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "POST /api/v1/accounts/{id}/navigation/map", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
                 new { name = "scripts", endpoints = new[] { "GET /api/v1/scripts", "POST /api/v1/accounts/{id}/scripts/load", "POST /api/v1/accounts/{id}/scripts/stop" } },
                 new { name = "scheduler", endpoints = new[] { "GET /api/v1/profiles", "POST /api/v1/profiles", "DELETE /api/v1/profiles/{name}", "GET /api/v1/scheduler", "POST /api/v1/accounts/{id}/scheduler/start", "POST /api/v1/accounts/{id}/scheduler/stop" } },
                 new { name = "account-session", endpoints = new[] { "POST /api/v1/accounts/connect", "POST /api/v1/accounts/{id}/disconnect" } },
@@ -115,6 +115,25 @@ internal sealed class ControlApiHost : IAsyncDisposable
             },
             note = "The interface observer and packet diagnostics are read-only. Game actions are exposed only when a reviewed runtime operation is implemented; no guessed protocol requests are sent."
         }));
+
+        app.MapPost("/api/v1/accounts/{id}/navigation/map", (string id, TravelToMapRequest request) =>
+        {
+            if (request.MapId <= 0)
+                return Results.BadRequest(new { error = "Destination map ID must be positive." });
+
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            return client.RequestTravelToMap(request.MapId, out var error)
+                ? Results.Accepted(value: new
+                {
+                    accepted = true,
+                    accountId = id,
+                    destinationMapId = request.MapId,
+                    note = "World-graph navigation requested. Follow runtime map/path diagnostics for progress."
+                })
+                : Results.Conflict(new { accepted = false, error });
+        });
 
         app.MapGet("/api/v1/accounts/{id}/runtime", (string id) =>
         {
@@ -586,5 +605,6 @@ internal sealed class ControlApiHost : IAsyncDisposable
     internal sealed record ProtocolEventSnapshot(string Type, int Count);
     internal sealed record ScriptLoadRequest(string Path);
     internal sealed record ConnectAccountRequest(string Username);
+    internal sealed record TravelToMapRequest(long MapId);
     internal sealed record ScheduleStartRequest(string Profile);
 }
