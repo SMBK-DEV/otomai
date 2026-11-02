@@ -93,7 +93,7 @@ public partial class AdminPanelWindow : Window
                 $"Map: {detail.MapId?.ToString() ?? "—"} [{detail.MapX?.ToString() ?? "?"},{detail.MapY?.ToString() ?? "?"}] • Cell: {detail.CellId}\n" +
                 $"Fight: {detail.InFight} • Bank: {detail.IsBank} • Koli: {detail.IsKoli} • Zaap: {detail.ZaapMode}\n" +
                 $"Inventory: {detail.InventoryCount} • Kamas: {detail.Kamas:N0} • Spells: {detail.SpellCount}\n" +
-                $"Path: {detail.AutoPathIndex}/{detail.AutoPathLength} • World path: {detail.WorldPathLength} • Cooldown: {detail.CooldownTime}ms\n" +
+                $"Path: {detail.AutoPathIndex}/{detail.AutoPathLength} • World target: {detail.WorldPathTargetMapId?.ToString() ?? "—"} / cell {detail.WorldPathTargetCellId} • Cooldown: {detail.CooldownTime}ms\n" +
                 $"Fights: {detail.FightTotalCount} • Koli: {detail.KoliFightDone} • Stuck: {detail.OccupiedStuckCounter} • Map null: {detail.MapNullCount}";
         }
         catch (Exception ex) { RuntimeDetailsText.Text = "Runtime details unavailable: " + ex.Message; }
