@@ -169,14 +169,91 @@ public partial class OperationsCenterWindow : Window
 
     private void AddProxy_Click(object sender, RoutedEventArgs e)
     {
-        var name = ProxyNameBox.Text.Trim(); var host = ProxyHostBox.Text.Trim();
-        if (name.Length == 0 || host.Length == 0 || !int.TryParse(ProxyPortBox.Text, out var port) || port is < 1 or > 65535)
-        { StatusText.Text = "Enter proxy label, host and a valid port."; return; }
-        _proxies.Add(new(name, Value(ProxyTypeBox), host, port, ProxyAccountBox.Text.Trim(), "Configured only — not applied"));
-        ProxyNameBox.Clear(); ProxyHostBox.Clear(); ProxyPortBox.Clear(); ProxyAccountBox.Clear(); SaveWorkspace();
-        StatusText.Text = "Proxy profile saved. It is not yet attached to the game transport.";
+        var name = ProxyNameBox.Text.Trim();
+        var host = ProxyHostBox.Text.Trim();
+        var type = Value(ProxyTypeBox);
+        var assignedAccount = ProxyAccountBox.Text.Trim();
+        if (name.Length == 0 || host.Length == 0 ||
+            Uri.CheckHostName(host) == UriHostNameType.Unknown ||
+            !int.TryParse(ProxyPortBox.Text, out var port) || port is < 1 or > 65535)
+        {
+            StatusText.Text = "Enter a proxy label, valid host/IP and port.";
+            return;
+        }
+
+        var state = type.Equals("SOCKS5", StringComparison.OrdinalIgnoreCase)
+            ? "Saved — apply to a Zaap account to use on next connection"
+            : "Metadata only — HTTP transport is not supported";
+        _proxies.Add(new(name, type, host, port, assignedAccount, state));
+        ProxyNameBox.Clear();
+        ProxyHostBox.Clear();
+        ProxyPortBox.Clear();
+        ProxyAccountBox.Clear();
+        SaveWorkspace();
+        StatusText.Text = type.Equals("SOCKS5", StringComparison.OrdinalIgnoreCase)
+            ? "SOCKS5 profile saved. Select it and apply it to a Zaap account; credentials are not supported in this screen."
+            : "HTTP profile saved as metadata only; the current game transport supports SOCKS5 only.";
     }
-    private void RemoveProxy_Click(object sender, RoutedEventArgs e) { if (ProxiesGrid.SelectedItem is ProxyProfile x) _proxies.Remove(x); SaveWorkspace(); }
+
+    private void ApplyProxy_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProxiesGrid.SelectedItem is not ProxyProfile profile)
+        {
+            StatusText.Text = "Select a proxy profile first.";
+            return;
+        }
+
+        if (!profile.Type.Equals("SOCKS5", StringComparison.OrdinalIgnoreCase))
+        {
+            StatusText.Text = "This runtime supports SOCKS5 only. HTTP profiles cannot be applied.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(profile.AssignedAccount))
+        {
+            StatusText.Text = "Enter the Zaap account login in the profile's AssignedAccount field before applying.";
+            return;
+        }
+
+        try
+        {
+            AccountService.Instance.LoadAccounts();
+            var account = AccountService.Instance.GetAccount(profile.AssignedAccount);
+            if (account is null)
+            {
+                StatusText.Text = "Account was not found in the local Zaap/BubbleBot account store. Sync Zaap accounts first and use the exact login.";
+                return;
+            }
+
+            var host = profile.Host.Contains(':') && !profile.Host.StartsWith("[", StringComparison.Ordinal)
+                ? $"[{profile.Host}]"
+                : profile.Host;
+            account.Proxy = $"socks5://{host}:{profile.Port}";
+            AccountService.Instance.SaveSaharachAccounts();
+
+            var index = _proxies.IndexOf(profile);
+            if (index >= 0)
+            {
+                _proxies[index] = profile with
+                {
+                    State = $"Applied to {profile.AssignedAccount} in accounts.json — next connection"
+                };
+            }
+
+            SaveWorkspace();
+            StatusText.Text = $"SOCKS5 profile applied to {profile.AssignedAccount}. It will be used on the next connection; no live account was disconnected or restarted.";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Could not apply proxy profile: " + ex.Message;
+        }
+    }
+
+    private void RemoveProxy_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProxiesGrid.SelectedItem is ProxyProfile x) _proxies.Remove(x);
+        SaveWorkspace();
+    }
 
     private void AddSubscription_Click(object sender, RoutedEventArgs e)
     {
