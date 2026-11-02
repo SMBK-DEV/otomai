@@ -106,7 +106,7 @@ internal sealed class ControlApiHost : IAsyncDisposable
             groups = new[]
             {
                 new { name = "runtime", endpoints = new[] { "GET /api/v1/status", "GET /api/v1/accounts", "GET /api/v1/accounts/{id}/runtime", "GET /api/v1/logs" } },
-                new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "POST /api/v1/accounts/{id}/navigation/map", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
+                new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "POST /api/v1/accounts/{id}/navigation/map", "POST /api/v1/accounts/{id}/inventory/equip", "POST /api/v1/accounts/{id}/inventory/use", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
                 new { name = "scripts", endpoints = new[] { "GET /api/v1/scripts", "POST /api/v1/accounts/{id}/scripts/load", "POST /api/v1/accounts/{id}/scripts/stop" } },
                 new { name = "scheduler", endpoints = new[] { "GET /api/v1/profiles", "POST /api/v1/profiles", "DELETE /api/v1/profiles/{name}", "GET /api/v1/scheduler", "POST /api/v1/accounts/{id}/scheduler/start", "POST /api/v1/accounts/{id}/scheduler/stop" } },
                 new { name = "account-session", endpoints = new[] { "POST /api/v1/accounts/connect", "POST /api/v1/accounts/{id}/disconnect" } },
@@ -181,6 +181,42 @@ internal sealed class ControlApiHost : IAsyncDisposable
                 lastFight = client.LastFight,
                 updatedAt = DateTimeOffset.UtcNow
             });
+        });
+
+        app.MapPost("/api/v1/accounts/{id}/inventory/equip", (string id, EquipInventoryItemRequest request) =>
+        {
+            if (request.ObjectUid <= 0)
+                return Results.BadRequest(new { error = "Object UID must be positive." });
+
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            if (!client.Connected || !client.IsConnected)
+                return Results.Conflict(new { error = "Account is not connected to the game server." });
+            if (client.IsInFight)
+                return Results.Conflict(new { error = "Inventory equipment changes are disabled during a fight." });
+
+            return client.EquipItem(request.ObjectUid)
+                ? Results.Accepted(value: new { accepted = true, accountId = id, objectUid = request.ObjectUid })
+                : Results.Conflict(new { accepted = false, error = "Item not found, not equippable, level requirement not met, or compatible slot is occupied." });
+        });
+
+        app.MapPost("/api/v1/accounts/{id}/inventory/use", (string id, UseInventoryItemRequest request) =>
+        {
+            if (request.Gid <= 0)
+                return Results.BadRequest(new { error = "Item GID must be positive." });
+
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            if (!client.Connected || !client.IsConnected)
+                return Results.Conflict(new { error = "Account is not connected to the game server." });
+            if (client.IsInFight)
+                return Results.Conflict(new { error = "Inventory item use is disabled during a fight." });
+
+            return client.UseItemByGid(request.Gid)
+                ? Results.Accepted(value: new { accepted = true, accountId = id, gid = request.Gid })
+                : Results.Conflict(new { accepted = false, error = "No usable item with this GID exists in the current inventory." });
         });
 
         app.MapGet("/api/v1/accounts/{id}/game-interface", (string id) =>
@@ -606,5 +642,7 @@ internal sealed class ControlApiHost : IAsyncDisposable
     internal sealed record ScriptLoadRequest(string Path);
     internal sealed record ConnectAccountRequest(string Username);
     internal sealed record TravelToMapRequest(long MapId);
+    internal sealed record EquipInventoryItemRequest(int ObjectUid);
+    internal sealed record UseInventoryItemRequest(int Gid);
     internal sealed record ScheduleStartRequest(string Profile);
 }
