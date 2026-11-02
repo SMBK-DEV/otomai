@@ -787,6 +787,50 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
         return _workflowService.UseItemByGid(gid);
     }
 
+    /// <summary>
+    /// Sends a manually selected NPC reply only when that exact enabled reply
+    /// is present in the latest observed dialogue snapshot.
+    /// ReplyId2 mirrors the already-used runtime convention for verified replies.
+    /// </summary>
+    public bool ReplyToObservedNpcChoice(int groupIndex, int replyId, out string error)
+    {
+        if (!Connected || !IsConnected)
+        {
+            error = "Account is not connected to the game server.";
+            return false;
+        }
+
+        if (IsInFight)
+        {
+            error = "NPC dialogue replies are disabled during a fight.";
+            return false;
+        }
+
+        var dialogue = DofusInterfaceState.Snapshot(CharacterId).Dialogue;
+        if (dialogue is null)
+        {
+            error = "There is no active observed NPC dialogue.";
+            return false;
+        }
+
+        var choice = dialogue.Choices.FirstOrDefault(item =>
+            item.GroupIndex == groupIndex && item.ReplyId == replyId && item.Enabled);
+        if (choice is null)
+        {
+            error = "The selected reply is not present and enabled in the latest dialogue snapshot.";
+            return false;
+        }
+
+        SendRequest(new NpcDialogReplyRequest
+        {
+            ReplyId = replyId,
+            ReplyId2 = replyId
+        }, NpcDialogReplyRequest.TypeUrl);
+
+        error = string.Empty;
+        return true;
+    }
+
     public void DoWork(bool noDelay = false)
     {
         _workflowService.DoWork(noDelay);
