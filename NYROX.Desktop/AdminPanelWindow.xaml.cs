@@ -12,7 +12,7 @@ internal sealed record RuntimeDetailSnapshot(string AccountId, string Character,
     int ServerId, string ServerName, bool Connected, bool Stopped, bool InFight, bool IsBank, bool IsKoli,
     bool ZaapMode, bool IsTrajetReady, bool IsWaitingPartyMembers, long? MapId, int? MapX, int? MapY,
     int CellId, int FightTotalCount, int KoliFightDone, int SpellCount, int InventoryCount, long Kamas,
-    int AutoPathLength, int AutoPathIndex, int WorldPathLength, int CooldownTime, int MapNullCount,
+    int AutoPathLength, int AutoPathIndex, long? WorldPathTargetMapId, int WorldPathTargetCellId, int CooldownTime, int MapNullCount,
     int OccupiedStuckCounter, DateTime LastMessageReceived, long LastMessageSentUnixMs,
     DateTime LastMapChange, DateTime LastReconnect, DateTime LastFight, DateTimeOffset UpdatedAt);
 
