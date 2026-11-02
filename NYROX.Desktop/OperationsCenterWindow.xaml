@@ -45,9 +45,11 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Characters">
-                <Grid Margin="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                    <WrapPanel><TextBox x:Name="CharacterAccountBox" Width="160" ToolTip="Account label"/><TextBox x:Name="CharacterNameBox" Width="160" ToolTip="Character name"/><ComboBox x:Name="CharacterClassBox" Width="150"><ComboBoxItem Content="Cra"/><ComboBoxItem Content="Panda"/><ComboBoxItem Content="Roublard"/><ComboBoxItem Content="Feca"/><ComboBoxItem Content="Eniripsa"/><ComboBoxItem Content="Other"/></ComboBox><TextBox x:Name="CharacterServerBox" Width="130" Text="Draconiros"/><Button Content="Add character plan" Click="AddCharacter_Click"/><Button Content="Remove selected" Click="RemoveCharacter_Click"/></WrapPanel>
-                    <DataGrid x:Name="CharactersGrid" Grid.Row="1" AutoGenerateColumns="True" IsReadOnly="True" CanUserAddRows="False" Margin="3,10,3,3"/>
+                <Grid Margin="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="190"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <WrapPanel><Button Content="Refresh live characters from runtime" Click="RefreshLiveCharacters_Click"/><TextBlock x:Name="LiveCharactersStatus" Text="Live character data has not been refreshed." Foreground="#9AA8B8" VerticalAlignment="Center" Margin="10,0,0,0"/></WrapPanel>
+                    <DataGrid x:Name="LiveCharactersGrid" Grid.Row="1" AutoGenerateColumns="True" IsReadOnly="True" CanUserAddRows="False" Margin="3,8,3,8"/>
+                    <WrapPanel Grid.Row="2"><TextBlock Text="Saved character plans (not created in-game)" Foreground="#69D4B2" FontWeight="SemiBold" VerticalAlignment="Center" Margin="3,8"/><TextBox x:Name="CharacterAccountBox" Width="160" ToolTip="Account label"/><TextBox x:Name="CharacterNameBox" Width="160" ToolTip="Character name"/><ComboBox x:Name="CharacterClassBox" Width="150"><ComboBoxItem Content="Cra"/><ComboBoxItem Content="Panda"/><ComboBoxItem Content="Roublard"/><ComboBoxItem Content="Feca"/><ComboBoxItem Content="Eniripsa"/><ComboBoxItem Content="Other"/></ComboBox><TextBox x:Name="CharacterServerBox" Width="130" Text="Draconiros"/><Button Content="Add character plan" Click="AddCharacter_Click"/><Button Content="Remove selected plan" Click="RemoveCharacter_Click"/></WrapPanel>
+                    <DataGrid x:Name="CharactersGrid" Grid.Row="3" AutoGenerateColumns="True" IsReadOnly="True" CanUserAddRows="False" Margin="3,8,3,3"/>
                 </Grid>
             </TabItem>
             <TabItem Header="Controller &amp; Map">
