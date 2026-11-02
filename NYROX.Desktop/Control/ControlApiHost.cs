@@ -97,6 +97,72 @@ internal sealed class ControlApiHost : IAsyncDisposable
             return Results.Ok(accounts);
         });
 
+        app.MapGet("/api/v1/capabilities", () => Results.Ok(new
+        {
+            apiVersion = 1,
+            engine = "BubbleBot runtime",
+            authentication = "X-NYROX-Token",
+            bindAddress = "127.0.0.1",
+            groups = new[]
+            {
+                new { name = "runtime", endpoints = new[] { "GET /api/v1/status", "GET /api/v1/accounts", "GET /api/v1/accounts/{id}/runtime", "GET /api/v1/logs" } },
+                new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
+                new { name = "scripts", endpoints = new[] { "GET /api/v1/scripts", "POST /api/v1/accounts/{id}/scripts/load", "POST /api/v1/accounts/{id}/scripts/stop" } },
+                new { name = "scheduler", endpoints = new[] { "GET /api/v1/profiles", "POST /api/v1/profiles", "DELETE /api/v1/profiles/{name}", "GET /api/v1/scheduler", "POST /api/v1/accounts/{id}/scheduler/start", "POST /api/v1/accounts/{id}/scheduler/stop" } },
+                new { name = "account-session", endpoints = new[] { "POST /api/v1/accounts/connect", "POST /api/v1/accounts/{id}/disconnect" } },
+                new { name = "game-data", endpoints = new[] { "GET /api/v1/game-data/{category}?q={query}&limit={limit}" } },
+                new { name = "packet-diagnostics", endpoints = new[] { "POST /api/v1/accounts/{id}/packet-capture/start", "POST /api/v1/accounts/{id}/packet-capture/stop", "POST /api/v1/accounts/{id}/packet-capture/clear" } }
+            },
+            note = "The interface observer and packet diagnostics are read-only. Game actions are exposed only when a reviewed runtime operation is implemented; no guessed protocol requests are sent."
+        }));
+
+        app.MapGet("/api/v1/accounts/{id}/runtime", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            var map = client.Map;
+            var inventory = client.Inventory;
+            return Results.Ok(new
+            {
+                accountId = client.BotId,
+                character = client.Info.Name,
+                level = client.Info.Information?.Level,
+                characterId = client.CharacterId,
+                serverId = client.ServerId,
+                serverName = client.ServerName,
+                connected = client.Connected,
+                stopped = client.IsStopped,
+                inFight = client.IsInFight,
+                isBank = client.IsBank,
+                isKoli = client.IsKoli,
+                zaapMode = client.ZaapMode,
+                isTrajetReady = client.IsTrajetReady,
+                isWaitingPartyMembers = client.IsWaitingPartyMembers,
+                mapId = map?.Id,
+                mapX = map?.Data.PosX,
+                mapY = map?.Data.PosY,
+                cellId = client.Info.CellId,
+                fightTotalCount = client.FightTotalCount,
+                koliFightDone = client.KoliFightDones,
+                spellCount = client.Spells.Count,
+                inventoryCount = inventory.Items.Count,
+                kamas = inventory.Kamas,
+                autoPathLength = client.AutoPath.Count,
+                autoPathIndex = client.AutoPathIndex,
+                worldPathLength = client.WorldPath?.Count ?? 0,
+                cooldownTime = client.CooldownTime,
+                mapNullCount = client.MapNullCount,
+                occupiedStuckCounter = client.OccupiedStuckCounter,
+                lastMessageReceived = client.LastMessageReceived,
+                lastMessageSentUnixMs = client.LastMessageSent,
+                lastMapChange = client.LastMapChange,
+                lastReconnect = client.LastReconnect,
+                lastFight = client.LastFight,
+                updatedAt = DateTimeOffset.UtcNow
+            });
+        });
+
         app.MapGet("/api/v1/accounts/{id}/game-interface", (string id) =>
         {
             if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
