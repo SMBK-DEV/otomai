@@ -13,6 +13,7 @@ internal sealed record OpsAccount(string Login, string Server, string ContactEma
 internal sealed record RegistrationRequest(string Label, string Email, string Server, string State);
 internal sealed record ProxyProfile(string Name, string Type, string Host, int Port, string AssignedAccount, string State);
 internal sealed record SubscriptionEntry(string Account, string Provider, string Amount, string Currency, string Reference, string Expiry, string State);
+internal sealed record LegacySubscribeCacheEntry(string Login, DateTime Expiration);
 internal sealed record CharacterPlan(string Account, string Character, string Class, string Server, string State);
 internal sealed class OperationsWorkspace
 {
@@ -314,6 +315,63 @@ public partial class OperationsCenterWindow : Window
         SubReferenceBox.Clear();
         SaveWorkspace();
         StatusText.Text = "Purchase job queued. Select it and open the official Ankama checkout to complete payment.";
+    }
+
+    private void ImportLegacySubscribeCache_Click(object sender, RoutedEventArgs e)
+    {
+        // Read-only bridge: the legacy cache contains login + expiry only. Never import
+        // credentials, cookies, WAF tokens, payment PINs, or execute the legacy runner.
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "subscribeCache.json"),
+            Path.Combine(Environment.CurrentDirectory, "subscribeCache.json"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NYROX", "subscribeCache.json")
+        };
+        var cachePath = candidates.FirstOrDefault(File.Exists);
+        if (cachePath is null)
+        {
+            StatusText.Text = "subscribeCache.json not found. Place the existing legacy cache beside NYROX or in %LocalAppData%\\NYROX, then import again.";
+            return;
+        }
+
+        try
+        {
+            var entries = JsonSerializer.Deserialize<List<LegacySubscribeCacheEntry>>(File.ReadAllText(cachePath)) ?? [];
+            var imported = 0;
+            foreach (var cached in entries.Where(x => !string.IsNullOrWhiteSpace(x.Login)))
+            {
+                var existing = _subscriptions.FirstOrDefault(x =>
+                    x.Account.Equals(cached.Login, StringComparison.OrdinalIgnoreCase) &&
+                    x.Provider.Equals("Legacy Subscribe Cache", StringComparison.OrdinalIgnoreCase));
+                var expiry = cached.Expiration == DateTime.MinValue
+                    ? "Unknown"
+                    : cached.Expiration.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                var state = cached.Expiration == DateTime.MinValue
+                    ? "Imported from legacy cache — expiry unavailable"
+                    : cached.Expiration.Date >= DateTime.Today
+                        ? "Imported from legacy cache — expiry recorded, not live-verified"
+                        : "Imported from legacy cache — recorded expiry is past, not live-verified";
+
+                var entry = new SubscriptionEntry(cached.Login, "Legacy Subscribe Cache", "—", "—", "", expiry, state);
+                if (existing is null)
+                {
+                    _subscriptions.Add(entry);
+                    imported++;
+                }
+                else
+                {
+                    var index = _subscriptions.IndexOf(existing);
+                    _subscriptions[index] = entry;
+                }
+            }
+
+            SaveWorkspace();
+            StatusText.Text = $"Imported/updated {imported} legacy cache record(s) from {Path.GetFileName(cachePath)}. Expiry data is historical and was not verified with Ankama.";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Could not read legacy Subscribe cache: " + ex.Message;
+        }
     }
 
     private void StartOfficialPurchase_Click(object sender, RoutedEventArgs e)
