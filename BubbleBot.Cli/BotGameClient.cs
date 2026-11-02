@@ -719,6 +719,49 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
         _navigationService.StartAutoPath();
     }
 
+    /// <summary>
+    /// Requests world-graph navigation using the runtime's existing travel service.
+    /// This does not send a guessed protocol message; the normal pathfinder and
+    /// transition executor remain responsible for movement.
+    /// </summary>
+    public bool RequestTravelToMap(long mapId, out string error)
+    {
+        if (mapId <= 0)
+        {
+            error = "Destination map ID must be positive.";
+            return false;
+        }
+
+        if (!Connected || !IsConnected)
+        {
+            error = "Account is not connected to the game server.";
+            return false;
+        }
+
+        if (IsInFight)
+        {
+            error = "Travel is unavailable while the character is in a fight.";
+            return false;
+        }
+
+        var currentMap = Map;
+        if (currentMap is null)
+        {
+            error = "No active map is available yet.";
+            return false;
+        }
+
+        if (currentMap.Id == mapId)
+        {
+            error = "Character is already on the destination map.";
+            return false;
+        }
+
+        _travelService.GoToMapSafe(currentMap, mapId);
+        error = string.Empty;
+        return true;
+    }
+
     public bool IsOnWantedMap()
     {
         return _navigationService.IsOnWantedMap();
