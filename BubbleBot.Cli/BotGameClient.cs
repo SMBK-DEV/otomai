@@ -788,6 +788,92 @@ public class BotGameClient : TcpClient, IMapMovementContext, IFightClientContext
     }
 
     /// <summary>
+    /// Offers one complete inventory stack in an already active exchange.
+    /// Quantity is taken from the live inventory snapshot; partial quantities
+    /// are intentionally not exposed until their protocol semantics are reviewed.
+    /// </summary>
+    public bool OfferInventoryStackInExchange(int objectUid, out string error)
+    {
+        if (!Connected || !IsConnected)
+        {
+            error = "Account is not connected to the game server.";
+            return false;
+        }
+
+        if (IsInFight)
+        {
+            error = "Exchange actions are disabled during a fight.";
+            return false;
+        }
+
+        var exchange = DofusInterfaceState.Snapshot(CharacterId).Exchange;
+        if (!exchange.Active)
+        {
+            error = "There is no active exchange.";
+            return false;
+        }
+
+        if (!Inventory.Items.TryGetValue(objectUid, out var wrapper) ||
+            wrapper.Item.Position != (int)CharacterInventoryPositionEnum.InventoryPositionNotEquiped ||
+            wrapper.Item.Item.Quantity <= 0)
+        {
+            error = "The UID is not a valid unequipped inventory stack.";
+            return false;
+        }
+
+        SendRequest(new ExchangeObjectMoveRequest
+        {
+            ObjectUid = objectUid,
+            Quantity = wrapper.Item.Item.Quantity
+        }, ExchangeObjectMoveRequest.TypeUrl);
+
+        error = string.Empty;
+        return true;
+    }
+
+    /// <summary>
+    /// Confirms the local exchange-ready state after the operator reviews the offer.
+    /// Uses the same request shape and step counter as the existing exchange handler.
+    /// </summary>
+    public bool ConfirmObservedExchangeReady(out string error)
+    {
+        if (!Connected || !IsConnected)
+        {
+            error = "Account is not connected to the game server.";
+            return false;
+        }
+
+        if (IsInFight)
+        {
+            error = "Exchange actions are disabled during a fight.";
+            return false;
+        }
+
+        var exchange = DofusInterfaceState.Snapshot(CharacterId).Exchange;
+        if (!exchange.Active)
+        {
+            error = "There is no active exchange.";
+            return false;
+        }
+
+        if (exchange.Items.Count == 0)
+        {
+            error = "No exchange offer has been observed yet; review the offer before confirming.";
+            return false;
+        }
+
+        SendRequest(new ExchangeReadyRequest
+        {
+            Ready = true,
+            Step = ObjectsInExchange,
+            Efvb = null
+        }, ExchangeReadyRequest.TypeUrl);
+
+        error = string.Empty;
+        return true;
+    }
+
+    /// <summary>
     /// Sends a manually selected NPC reply only when that exact enabled reply
     /// is present in the latest observed dialogue snapshot.
     /// ReplyId2 mirrors the already-used runtime convention for verified replies.
