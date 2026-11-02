@@ -171,6 +171,44 @@ public partial class AdminPanelWindow : Window
         catch (Exception ex) { StatusText.Text = ex.Message; }
     }
 
+    private async void NavigateToMap_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedAccount is not { } account)
+        {
+            StatusText.Text = "Select an account first.";
+            return;
+        }
+
+        if (!long.TryParse(DestinationMapIdText.Text.Trim(), out var mapId) || mapId <= 0)
+        {
+            StatusText.Text = "Enter a valid positive destination map ID.";
+            return;
+        }
+
+        if (MessageBox.Show(
+                $"Request world-map navigation for {account.Character} to map {mapId}? The runtime pathfinder will choose the route.",
+                "Confirm map navigation",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            using var response = await _api.PostAsync(
+                $"api/v1/accounts/{Uri.EscapeDataString(account.Id)}/navigation/map",
+                new { mapId });
+            var body = await response.Content.ReadAsStringAsync();
+            StatusText.Text = response.IsSuccessStatusCode
+                ? $"Navigation accepted for {account.Id} → map {mapId}."
+                : $"Navigation rejected: {body}";
+            await RefreshSelectedRuntimeAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Navigation request failed: " + ex.Message;
+        }
+    }
+
     private async void Disconnect_Click(object sender, RoutedEventArgs e)
     {
         if (SelectedAccount is not { } account) { StatusText.Text = "Select an account first."; return; }
