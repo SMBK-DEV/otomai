@@ -336,7 +336,9 @@ public partial class OperationsCenterWindow : Window
 
         try
         {
-            var entries = JsonSerializer.Deserialize<List<LegacySubscribeCacheEntry>>(File.ReadAllText(cachePath)) ?? [];
+            var entries = JsonSerializer.Deserialize<List<LegacySubscribeCacheEntry>>(
+                File.ReadAllText(cachePath),
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
             var imported = 0;
             foreach (var cached in entries.Where(x => !string.IsNullOrWhiteSpace(x.Login)))
             {
