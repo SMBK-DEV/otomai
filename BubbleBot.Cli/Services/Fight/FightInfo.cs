@@ -2224,22 +2224,13 @@ public class FightInfo
 
     public int GetFreeId()
     {
+        // Return the first positive identifier that is not already used.
+        // The previous loop incremented even when the identifier was free
+        // and never terminated because its success condition was not reached.
         var newId = 1;
-        var isUnique = false;
-
-        while (!isUnique)
+        while (ActorPositions.ContainsKey(newId))
         {
-            isUnique = true;
-            var allFighters = ActorPositions.Values.ToList();
-
-            if (allFighters.All(fighter => newId != fighter.Id))
-            {     
-                newId += 1;
-                continue;
-            }
-
-            newId += 1;
-            isUnique = false;
+            newId++;
         }
 
         return newId;
