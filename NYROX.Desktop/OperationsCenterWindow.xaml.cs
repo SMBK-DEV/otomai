@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using BubbleBot.Cli.Services;
 using NYROX.Desktop.Control;
 
 namespace NYROX.Desktop;
@@ -111,16 +112,59 @@ public partial class OperationsCenterWindow : Window
             return;
         }
 
-        if (_accounts.Any(x => string.Equals(x.Login, request.Email, StringComparison.OrdinalIgnoreCase)))
+        var index = _registrations.IndexOf(request);
+        if (index < 0) return;
+
+        _registrations[index] = request with
         {
-            StatusText.Text = "This account is already in the shared account registry.";
+            State = "Registration marked complete — import the account through Zaap, then sync."
+        };
+        SaveWorkspace();
+        StatusText.Text = "Registration task updated. The account will appear here only after it exists in the local Zaap account store.";
+    }
+
+    private void SyncAccountsFromZaap_Click(object sender, RoutedEventArgs e)
+    {
+        var zaapSettingsPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "zaap", "Settings");
+        if (!File.Exists(zaapSettingsPath))
+        {
+            StatusText.Text = "Zaap Settings was not found. Sign in through the official Ankama/Zaap client first.";
             return;
         }
 
-        _accounts.Add(new(request.Email, request.Server, request.Email, "Registered — credentials not imported"));
-        _registrations.Remove(request);
-        SaveWorkspace();
-        StatusText.Text = "Registered account added to the shared Accounts registry. Add credentials only through the secure account flow.";
+        try
+        {
+            AccountService.Instance.LoadAccounts();
+            var imported = 0;
+            foreach (var source in AccountService.Instance.SaharachAccounts
+                         .Where(x => !string.IsNullOrWhiteSpace(x.Username)))
+            {
+                var existing = _accounts.FirstOrDefault(x =>
+                    string.Equals(x.Login, source.Username, StringComparison.OrdinalIgnoreCase));
+                if (existing is null)
+                {
+                    _accounts.Add(new(source.Username, source.Server.ToString(), "", "Imported from Zaap"));
+                    imported++;
+                }
+                else
+                {
+                    var index = _accounts.IndexOf(existing);
+                    _accounts[index] = existing with
+                    {
+                        Server = source.Server.ToString(),
+                        State = "Imported from Zaap"
+                    };
+                }
+            }
+
+            SaveWorkspace();
+            StatusText.Text = $"Zaap sync complete: {imported} new account(s), {_accounts.Count} total registry record(s).";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Zaap account sync failed: " + ex.Message;
+        }
     }
 
     private void AddProxy_Click(object sender, RoutedEventArgs e)
