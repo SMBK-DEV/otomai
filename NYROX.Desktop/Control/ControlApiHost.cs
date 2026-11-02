@@ -106,8 +106,9 @@ internal sealed class ControlApiHost : IAsyncDisposable
             groups = new[]
             {
                 new { name = "runtime", endpoints = new[] { "GET /api/v1/status", "GET /api/v1/accounts", "GET /api/v1/accounts/{id}/runtime", "GET /api/v1/logs" } },
-                new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "POST /api/v1/accounts/{id}/dialogue/reply", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
+                new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
                 new { name = "navigation", endpoints = new[] { "POST /api/v1/accounts/{id}/navigation/map" } },
+                new { name = "dialogue-actions", endpoints = new[] { "POST /api/v1/accounts/{id}/dialogue/reply" } },
                 new { name = "inventory-actions", endpoints = new[] { "POST /api/v1/accounts/{id}/inventory/equip", "POST /api/v1/accounts/{id}/inventory/use" } },
                 new { name = "scripts", endpoints = new[] { "GET /api/v1/scripts", "POST /api/v1/accounts/{id}/scripts/load", "POST /api/v1/accounts/{id}/scripts/stop" } },
                 new { name = "scheduler", endpoints = new[] { "GET /api/v1/profiles", "POST /api/v1/profiles", "DELETE /api/v1/profiles/{name}", "GET /api/v1/scheduler", "POST /api/v1/accounts/{id}/scheduler/start", "POST /api/v1/accounts/{id}/scheduler/stop" } },
@@ -115,7 +116,7 @@ internal sealed class ControlApiHost : IAsyncDisposable
                 new { name = "game-data", endpoints = new[] { "GET /api/v1/game-data/{category}?q={query}&limit={limit}" } },
                 new { name = "packet-diagnostics", endpoints = new[] { "POST /api/v1/accounts/{id}/packet-capture/start", "POST /api/v1/accounts/{id}/packet-capture/stop", "POST /api/v1/accounts/{id}/packet-capture/clear" } }
             },
-            note = "The interface observer and packet diagnostics are read-only. Game actions are exposed only when a reviewed runtime operation is implemented; no guessed protocol requests are sent."
+            note = "Observation and packet diagnostics are read-only. Navigation, dialogue and inventory actions are guarded wrappers around reviewed runtime operations; no guessed protocol requests are sent."
         }));
 
         app.MapPost("/api/v1/accounts/{id}/navigation/map", (string id, TravelToMapRequest request) =>
