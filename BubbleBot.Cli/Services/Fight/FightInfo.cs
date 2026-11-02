@@ -111,7 +111,7 @@ public class FightInfo
             var turnNumber = Turn;
             tokenSource.Token.Register(() =>
             {
-                if (turnNumber == Turn && FighterPlaying == Client.Fighter)
+                if (turnNumber == Turn && FighterPlaying == Client.Fighter && !IsEnded && Client.IsInFight)
                 {
                     PassTurn(true);
                 }
@@ -181,6 +181,10 @@ public class FightInfo
     public void OnFightEndEvent(FightEndEvent fightEndEvent)
     {
         IsEnded = true;
+
+        // Stop any delayed AI step from sending actions after the server ends the fight.
+        // The cancellation callback is guarded by IsEnded/Client.IsInFight above.
+        _playTokenSource.Cancel();
     }
 
     private int _executedSpells = 0;
