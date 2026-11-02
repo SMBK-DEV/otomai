@@ -20,6 +20,8 @@
         </DockPanel>
         <WrapPanel Grid.Row="1" Margin="0,0,0,10">
             <TextBlock Text="◆ Current cell" Foreground="#F4C542" Margin="0,0,14,0"/>
+            <TextBlock Text="◆ Team 0" Foreground="#60A5FA" Margin="0,0,14,0"/>
+            <TextBlock Text="◆ Team 1+" Foreground="#F87171" Margin="0,0,14,0"/>
             <TextBlock Text="◆ Interactive" Foreground="#38BDF8" Margin="0,0,14,0"/>
             <TextBlock Text="◆ Map-change data" Foreground="#FB923C" Margin="0,0,14,0"/>
             <TextBlock Text="◆ Occupied" Foreground="#C084FC" Margin="0,0,14,0"/>
