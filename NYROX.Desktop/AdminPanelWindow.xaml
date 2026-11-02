@@ -77,7 +77,9 @@
                 <TextBlock Text="LIVE RUNTIME DETAILS" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,5"/>
                 <TextBlock x:Name="RuntimeDetailsText" Text="Select an account to inspect runtime state." Foreground="{StaticResource TextMuted}" FontSize="10" TextWrapping="Wrap" MaxHeight="150"/>
                 <TextBlock Text="API CAPABILITIES" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,10,0,5"/>
-                <TextBlock x:Name="ApiCapabilitiesText" Text="Loading API catalog…" Foreground="{StaticResource TextMuted}" FontSize="10" TextWrapping="Wrap" MaxHeight="120"/>
+                <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto">
+                    <TextBlock x:Name="ApiCapabilitiesText" Text="Loading API catalog…" Foreground="{StaticResource TextMuted}" FontSize="10" TextWrapping="Wrap"/>
+                </ScrollViewer>
                 <Border Height="1" Background="{StaticResource PanelBorder}" Margin="0,8,0,10"/>
                 <TextBlock Text="Admin actions require confirmation. Stop Lua does not forcibly abort a callback already executing." Foreground="{StaticResource TextMuted}" FontSize="10" TextWrapping="Wrap"/>
             </StackPanel></ScrollViewer>
