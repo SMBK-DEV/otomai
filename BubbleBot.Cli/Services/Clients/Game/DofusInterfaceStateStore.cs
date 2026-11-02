@@ -15,6 +15,9 @@ public sealed class DofusInterfaceStateStore
     private long? _exchangePartnerId;
     private readonly Dictionary<int, DofusExchangeItemSnapshot> _exchangeItems = new();
     private readonly Dictionary<long, bool> _exchangeReady = new();
+    private bool _bidHouseOpen;
+    private int? _bidHouseObjectGid;
+    private IReadOnlyList<DofusBidHouseItemSnapshot> _bidHouseItems = Array.Empty<DofusBidHouseItemSnapshot>();
 
     public void Observe(IProtoMessage message)
     {
@@ -45,6 +48,23 @@ public sealed class DofusInterfaceStateStore
 
                 case DialogLeaveEvent:
                     _dialogue = null;
+                    _bidHouseOpen = false;
+                    _bidHouseObjectGid = null;
+                    _bidHouseItems = Array.Empty<DofusBidHouseItemSnapshot>();
+                    break;
+
+                case ExchangeBidBuyerStartedEvent:
+                    _bidHouseOpen = true;
+                    _bidHouseObjectGid = null;
+                    _bidHouseItems = Array.Empty<DofusBidHouseItemSnapshot>();
+                    break;
+
+                case ExchangeTypesItemsExchangerDescriptionForUserEvent results:
+                    _bidHouseOpen = true;
+                    _bidHouseObjectGid = results.ObjectGid;
+                    _bidHouseItems = results.ItemDescriptions
+                        .Select(item => new DofusBidHouseItemSnapshot(item.Uid, item.Prices.ToArray()))
+                        .ToArray();
                     break;
 
                 case ExchangeRequestedTradeEvent requested:
@@ -121,6 +141,11 @@ public sealed class DofusInterfaceStateStore
                     _exchangePartnerId,
                     _exchangeItems.Values.OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ToArray(),
                     ready,
+                    DateTimeOffset.UtcNow),
+                new DofusBidHouseSnapshot(
+                    _bidHouseOpen,
+                    _bidHouseObjectGid,
+                    _bidHouseItems,
                     DateTimeOffset.UtcNow));
         }
     }
@@ -137,4 +162,6 @@ public sealed record DofusDialogueSnapshot(long? NpcId, IReadOnlyList<string> Te
 public sealed record DofusExchangeItemSnapshot(int Uid, long Gid, int Quantity, string Name, int IconId, int Position);
 public sealed record DofusExchangeReadySnapshot(long CharacterId, bool Ready, bool IsLocalPlayer);
 public sealed record DofusExchangeSnapshot(bool Active, long? PartnerCharacterId, IReadOnlyList<DofusExchangeItemSnapshot> Items, IReadOnlyList<DofusExchangeReadySnapshot> Ready, DateTimeOffset UpdatedAt);
-public sealed record DofusInterfaceStateSnapshot(DofusDialogueSnapshot? Dialogue, DofusExchangeSnapshot Exchange);
+public sealed record DofusBidHouseItemSnapshot(long Uid, IReadOnlyList<long> Prices);
+public sealed record DofusBidHouseSnapshot(bool Open, int? ObjectGid, IReadOnlyList<DofusBidHouseItemSnapshot> Items, DateTimeOffset UpdatedAt);
+public sealed record DofusInterfaceStateSnapshot(DofusDialogueSnapshot? Dialogue, DofusExchangeSnapshot Exchange, DofusBidHouseSnapshot BidHouse);
