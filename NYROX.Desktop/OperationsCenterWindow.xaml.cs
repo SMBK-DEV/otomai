@@ -290,11 +290,97 @@ public partial class OperationsCenterWindow : Window
 
     private void AddSubscription_Click(object sender, RoutedEventArgs e)
     {
-        var account = SubAccountBox.Text.Trim(); var amount = SubAmountBox.Text.Trim();
-        if (account.Length == 0 || amount.Length == 0) { StatusText.Text = "Enter account and amount."; return; }
-        _subscriptions.Add(new(account, Value(SubProviderBox), amount, Value(SubCurrencyBox),
-            SubReferenceBox.Text.Trim(), SubExpiryBox.Text.Trim(), "Pending / reminder only"));
-        SubReferenceBox.Clear(); SaveWorkspace(); StatusText.Text = "Subscription record saved. No payment or Ogrine purchase was made.";
+        var account = SubAccountBox.Text.Trim();
+        var amount = SubAmountBox.Text.Trim();
+        var provider = Value(SubProviderBox);
+        var currency = Value(SubCurrencyBox);
+        if (account.Length == 0 || amount.Length == 0)
+        {
+            StatusText.Text = "Enter account and amount.";
+            return;
+        }
+
+        if (!decimal.TryParse(amount, System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.InvariantCulture, out var parsedAmount) || parsedAmount <= 0)
+        {
+            StatusText.Text = "Enter a valid positive amount (use a dot for decimals).";
+            return;
+        }
+
+        _subscriptions.Add(new(account, provider, parsedAmount.ToString("0.##",
+            System.Globalization.CultureInfo.InvariantCulture), currency,
+            SubReferenceBox.Text.Trim(), SubExpiryBox.Text.Trim(),
+            "Queued — official checkout not started"));
+        SubReferenceBox.Clear();
+        SaveWorkspace();
+        StatusText.Text = "Purchase job queued. Select it and open the official Ankama checkout to complete payment.";
+    }
+
+    private void StartOfficialPurchase_Click(object sender, RoutedEventArgs e)
+    {
+        if (SubscriptionsGrid.SelectedItem is not SubscriptionEntry entry)
+        {
+            StatusText.Text = "Select an Abonnement or Ogrines purchase job first.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(entry.Account))
+        {
+            StatusText.Text = "The purchase job has no Ankama account label.";
+            return;
+        }
+
+        // Open only Ankama's official checkout surface. The customer completes login,
+        // selects the product/payment method and authorizes the transaction there.
+        var url = entry.Provider.Equals("Ogrines", StringComparison.OrdinalIgnoreCase)
+            ? "https://www.dofus.com/fr/achat-kamas/achat-ogrines"
+            : "https://account.ankama.com/";
+
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
+            {
+                UseShellExecute = true
+            });
+
+            var index = _subscriptions.IndexOf(entry);
+            if (index >= 0)
+            {
+                _subscriptions[index] = entry with
+                {
+                    State = "Official Ankama checkout opened — awaiting customer payment and verification"
+                };
+            }
+
+            SaveWorkspace();
+            StatusText.Text = $"Official checkout opened for {entry.Account}. Complete and authorize the purchase on Ankama; NYROX has not charged the account.";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Could not open the official Ankama checkout: " + ex.Message;
+        }
+    }
+
+    private void OpenAccountManagement_Click(object sender, RoutedEventArgs e)
+    {
+        if (SubscriptionsGrid.SelectedItem is not SubscriptionEntry entry)
+        {
+            StatusText.Text = "Select a purchase job first.";
+            return;
+        }
+
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://account.ankama.com/")
+            {
+                UseShellExecute = true
+            });
+            StatusText.Text = $"Opened official Ankama account management. Check the balance or subscription for {entry.Account}; NYROX does not yet have an official account-status API.";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Could not open Ankama account management: " + ex.Message;
+        }
     }
     private void ConfirmSubscriptionExternally_Click(object sender, RoutedEventArgs e)
     {
