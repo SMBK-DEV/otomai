@@ -14,14 +14,17 @@ internal sealed record GameExchangeItemDto(int Uid, long Gid, int Quantity, stri
 internal sealed record GameExchangeReadyDto(long CharacterId, bool Ready, bool IsLocalPlayer);
 internal sealed record GameExchangeDto(bool Active, long? PartnerCharacterId, List<GameExchangeItemDto> Items,
     List<GameExchangeReadyDto> Ready, DateTimeOffset UpdatedAt);
+internal sealed record GameBidHouseItemDto(long Uid, List<long> Prices);
+internal sealed record GameBidHouseDto(bool Open, int? ObjectGid, List<GameBidHouseItemDto> Items, DateTimeOffset UpdatedAt);
 internal sealed record GameInterfaceSnapshot(string AccountId, string Character, bool Connected, long CharacterId,
     long Kamas, int InventoryCount, List<GameInterfaceItemDto> Inventory, GameDialogueDto? Dialogue,
-    GameExchangeDto Exchange, DateTimeOffset UpdatedAt);
+    GameExchangeDto Exchange, GameBidHouseDto BidHouse, DateTimeOffset UpdatedAt);
 internal sealed record DialogueChoiceView(int GroupIndex, int GroupId, int ReplyId, bool Enabled, string Label, string State);
 internal sealed record InventoryTileView(int Uid, long Gid, string Name, int Quantity, int Position,
     int Level, int IconId, string Initial, string Tooltip);
 internal sealed record EquipmentView(string Slot, string Name);
 internal sealed record ExchangeReadyView(string Label, Brush Brush);
+internal sealed record BidHouseItemView(string Label, string Prices);
 
 public partial class GameInterfaceWindow : Window
 {
@@ -70,6 +73,7 @@ public partial class GameInterfaceWindow : Window
             RenderDialogue(data.Dialogue);
             RenderInventory(data.Inventory);
             RenderExchange(data.Exchange, data.Inventory);
+            RenderBidHouse(data.BidHouse);
             StatusText.Text = $"Données actualisées à {data.UpdatedAt.ToLocalTime():T} • rafraîchissement automatique toutes les 2 secondes";
         }
         catch (Exception ex)
@@ -150,6 +154,49 @@ public partial class GameInterfaceWindow : Window
             ExchangeHintText.Text = "L'interface est prête. Quand un échange démarre, les objets observés et les états Ready seront affichés ici.";
         else
             ExchangeHintText.Text = "Les événements actuels fournissent la liste observée et l'état Ready. Les contrôles de déplacement/validation restent désactivés pour éviter d'envoyer une requête d'échange mal formée.";
+    }
+
+    private void RenderBidHouse(GameBidHouseDto bidHouse)
+    {
+        HdvStateText.Text = bidHouse.Open
+            ? $"HDV ouvert • GID recherché : {(bidHouse.ObjectGid?.ToString() ?? "—")} • {bidHouse.Items.Count} résultat(s)"
+            : "Ouvrez l'interface acheteur HDV dans le jeu.";
+        HdvResultsList.ItemsSource = bidHouse.Items.Select(item => new BidHouseItemView(
+            $"Offre #{item.Uid}",
+            item.Prices.Count > 0 ? string.Join(" / ", item.Prices.Select(price => price.ToString("N0"))) + " kamas" : "Prix non communiqué"))
+            .ToList();
+        HdvHintText.Text = "Recherche et lecture des résultats uniquement. Aucun achat automatique n'est disponible.";
+    }
+
+    private async void SearchHdv_Click(object sender, RoutedEventArgs e)
+    {
+        if (_snapshot is not { Connected: true } || !_snapshot.BidHouse.Open)
+        {
+            HdvHintText.Text = "Connectez le personnage et ouvrez l'interface acheteur HDV dans le jeu.";
+            return;
+        }
+
+        if (!int.TryParse(HdvGidText.Text.Trim(), out var gid) || gid <= 0)
+        {
+            HdvHintText.Text = "Saisissez un GID d'objet valide.";
+            return;
+        }
+
+        try
+        {
+            using var response = await _api.PostAsync(
+                $"api/v1/accounts/{Uri.EscapeDataString(_accountId)}/hdv/search",
+                new { gid });
+            var body = await response.Content.ReadAsStringAsync();
+            HdvHintText.Text = response.IsSuccessStatusCode
+                ? $"Recherche du GID {gid} envoyée. Attente des résultats du serveur…"
+                : $"Recherche refusée : {body}";
+            await RefreshDataAsync();
+        }
+        catch (Exception ex)
+        {
+            HdvHintText.Text = "Échec de la recherche : " + ex.Message;
+        }
     }
 
     private static string GetSlotName(int position) => position switch
