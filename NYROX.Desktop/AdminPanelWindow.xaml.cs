@@ -64,8 +64,9 @@ public partial class AdminPanelWindow : Window
                 SelectedAccountText.Text = $"{SelectedAccount.Character} • {SelectedAccount.Id}\nLevel {SelectedAccount.Level?.ToString() ?? "?"} • {(SelectedAccount.Connected ? "Connected" : "Disconnected")} • {(SelectedAccount.InFight ? "In fight" : "Not fighting")}";
             ApiCapabilitiesText.Text = capabilities is null
                 ? "API catalog unavailable."
-                : string.Join(Environment.NewLine, capabilities.Groups.Select(group =>
-                    $"{group.Name.ToUpperInvariant()} ({group.Endpoints.Count})"));
+                : string.Join(Environment.NewLine + Environment.NewLine, capabilities.Groups.Select(group =>
+                    $"{group.Name.ToUpperInvariant()} ({group.Endpoints.Count})" + Environment.NewLine +
+                    string.Join(Environment.NewLine, group.Endpoints.Select(endpoint => "  " + endpoint))));
             await RefreshSelectedRuntimeAsync();
             StatusText.Text = $"API: {status?.State ?? "unavailable"} • {capabilities?.Groups.Sum(group => group.Endpoints.Count) ?? 0} documented endpoints • refreshed {DateTime.Now:T}";
         }
