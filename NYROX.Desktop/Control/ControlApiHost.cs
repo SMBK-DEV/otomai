@@ -109,6 +109,7 @@ internal sealed class ControlApiHost : IAsyncDisposable
                 new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
                 new { name = "navigation", endpoints = new[] { "POST /api/v1/accounts/{id}/navigation/map" } },
                 new { name = "dialogue-actions", endpoints = new[] { "POST /api/v1/accounts/{id}/dialogue/reply" } },
+                new { name = "exchange-actions", endpoints = new[] { "POST /api/v1/accounts/{id}/exchange/offer-stack", "POST /api/v1/accounts/{id}/exchange/ready" } },
                 new { name = "inventory-actions", endpoints = new[] { "POST /api/v1/accounts/{id}/inventory/equip", "POST /api/v1/accounts/{id}/inventory/use" } },
                 new { name = "scripts", endpoints = new[] { "GET /api/v1/scripts", "POST /api/v1/accounts/{id}/scripts/load", "POST /api/v1/accounts/{id}/scripts/stop" } },
                 new { name = "scheduler", endpoints = new[] { "GET /api/v1/profiles", "POST /api/v1/profiles", "DELETE /api/v1/profiles/{name}", "GET /api/v1/scheduler", "POST /api/v1/accounts/{id}/scheduler/start", "POST /api/v1/accounts/{id}/scheduler/stop" } },
@@ -184,6 +185,29 @@ internal sealed class ControlApiHost : IAsyncDisposable
                 lastFight = client.LastFight,
                 updatedAt = DateTimeOffset.UtcNow
             });
+        });
+
+        app.MapPost("/api/v1/accounts/{id}/exchange/offer-stack", (string id, ExchangeOfferStackRequest request) =>
+        {
+            if (request.ObjectUid <= 0)
+                return Results.BadRequest(new { error = "Object UID must be positive." });
+
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            return client.OfferInventoryStackInExchange(request.ObjectUid, out var error)
+                ? Results.Accepted(value: new { accepted = true, accountId = id, request.ObjectUid })
+                : Results.Conflict(new { accepted = false, error });
+        });
+
+        app.MapPost("/api/v1/accounts/{id}/exchange/ready", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            return client.ConfirmObservedExchangeReady(out var error)
+                ? Results.Accepted(value: new { accepted = true, accountId = id })
+                : Results.Conflict(new { accepted = false, error });
         });
 
         app.MapPost("/api/v1/accounts/{id}/dialogue/reply", (string id, NpcDialogueReplyRequest request) =>
@@ -661,5 +685,6 @@ internal sealed class ControlApiHost : IAsyncDisposable
     internal sealed record EquipInventoryItemRequest(int ObjectUid);
     internal sealed record UseInventoryItemRequest(int Gid);
     internal sealed record NpcDialogueReplyRequest(int GroupIndex, int ReplyId);
+    internal sealed record ExchangeOfferStackRequest(int ObjectUid);
     internal sealed record ScheduleStartRequest(string Profile);
 }
