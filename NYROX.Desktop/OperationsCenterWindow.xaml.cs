@@ -519,6 +519,12 @@ public partial class OperationsCenterWindow : Window
     {
         var w = new AdminPanelWindow(_token) { Owner = this }; w.Show();
     }
+    private void OpenGameInterface_Click(object sender, RoutedEventArgs e)
+    {
+        var w = new GameInterfaceWindow(_token) { Owner = this };
+        w.Show();
+    }
+
     private async void OpenMap_Click(object sender, RoutedEventArgs e)
     {
         try
