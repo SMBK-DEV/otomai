@@ -46,6 +46,7 @@ public partial class MapCellsWindow : Window
     private readonly ControlApiClient _api;
     private readonly string _accountId;
     private readonly System.Windows.Threading.DispatcherTimer _timer;
+    private bool _refreshing;
 
     public MapCellsWindow(string token, string accountId)
     {
@@ -60,6 +61,8 @@ public partial class MapCellsWindow : Window
 
     private async Task RefreshDataAsync()
     {
+        if (_refreshing) return;
+        _refreshing = true;
         try
         {
             var snapshot = await _api.GetAsync<MapCellsSnapshot>(
@@ -96,6 +99,10 @@ public partial class MapCellsWindow : Window
         catch (Exception ex)
         {
             MapInfoText.Text = $"Map data unavailable: {ex.Message}";
+        }
+        finally
+        {
+            _refreshing = false;
         }
     }
 
