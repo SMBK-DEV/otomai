@@ -64,6 +64,15 @@
                     <Button DockPanel.Dock="Right" Content="Go" Click="NavigateToMap_Click" Margin="6,0,0,0" MinWidth="52"/>
                     <TextBox x:Name="DestinationMapIdText" Text="" ToolTip="Destination map ID" VerticalContentAlignment="Center" Padding="6,4"/>
                 </DockPanel>
+                <TextBlock Text="Inventory actions (outside fights)" Foreground="{StaticResource TextMuted}" FontSize="10" Margin="0,5,0,3"/>
+                <DockPanel LastChildFill="True" Margin="0,0,0,4">
+                    <Button DockPanel.Dock="Right" Content="Equip UID" Click="EquipInventoryItem_Click" Margin="6,0,0,0" MinWidth="72"/>
+                    <TextBox x:Name="InventoryObjectUidText" ToolTip="Inventory object UID" VerticalContentAlignment="Center" Padding="6,4"/>
+                </DockPanel>
+                <DockPanel LastChildFill="True" Margin="0,0,0,4">
+                    <Button DockPanel.Dock="Right" Content="Use GID" Click="UseInventoryItem_Click" Margin="6,0,0,0" MinWidth="72"/>
+                    <TextBox x:Name="InventoryItemGidText" ToolTip="Item template GID" VerticalContentAlignment="Center" Padding="6,4"/>
+                </DockPanel>
                 <Border Height="1" Background="{StaticResource PanelBorder}" Margin="0,8,0,10"/>
                 <TextBlock Text="LIVE RUNTIME DETAILS" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="0,0,0,5"/>
                 <TextBlock x:Name="RuntimeDetailsText" Text="Select an account to inspect runtime state." Foreground="{StaticResource TextMuted}" FontSize="10" TextWrapping="Wrap" MaxHeight="150"/>
