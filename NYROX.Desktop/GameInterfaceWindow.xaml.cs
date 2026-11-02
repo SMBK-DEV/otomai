@@ -153,7 +153,7 @@ public partial class GameInterfaceWindow : Window
         if (!exchange.Active)
             ExchangeHintText.Text = "L'interface est prête. Quand un échange démarre, les objets observés et les états Ready seront affichés ici.";
         else
-            ExchangeHintText.Text = "Les événements actuels fournissent la liste observée et l'état Ready. Les contrôles de déplacement/validation restent désactivés pour éviter d'envoyer une requête d'échange mal formée.";
+            ExchangeHintText.Text = "Les événements serveur fournissent l'offre et l'état Ready. Vous pouvez offrir une pile complète et confirmer manuellement après vérification.";
     }
 
     private void RenderBidHouse(GameBidHouseDto bidHouse)
