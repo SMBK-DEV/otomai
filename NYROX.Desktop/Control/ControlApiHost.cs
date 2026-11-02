@@ -106,18 +106,19 @@ internal sealed class ControlApiHost : IAsyncDisposable
             groups = new[]
             {
                 new { name = "runtime", endpoints = new[] { "GET /api/v1/status", "GET /api/v1/accounts", "GET /api/v1/accounts/{id}/runtime", "GET /api/v1/logs" } },
-                new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
+                new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "GET /api/v1/accounts/{id}/hdv", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
                 new { name = "navigation", endpoints = new[] { "POST /api/v1/accounts/{id}/navigation/map" } },
                 new { name = "dialogue-actions", endpoints = new[] { "POST /api/v1/accounts/{id}/dialogue/reply" } },
                 new { name = "exchange-actions", endpoints = new[] { "POST /api/v1/accounts/{id}/exchange/offer-stack", "POST /api/v1/accounts/{id}/exchange/ready" } },
                 new { name = "inventory-actions", endpoints = new[] { "POST /api/v1/accounts/{id}/inventory/equip", "POST /api/v1/accounts/{id}/inventory/use" } },
+                new { name = "hdv-search", endpoints = new[] { "POST /api/v1/accounts/{id}/hdv/search" } },
                 new { name = "scripts", endpoints = new[] { "GET /api/v1/scripts", "POST /api/v1/accounts/{id}/scripts/load", "POST /api/v1/accounts/{id}/scripts/stop" } },
                 new { name = "scheduler", endpoints = new[] { "GET /api/v1/profiles", "POST /api/v1/profiles", "DELETE /api/v1/profiles/{name}", "GET /api/v1/scheduler", "POST /api/v1/accounts/{id}/scheduler/start", "POST /api/v1/accounts/{id}/scheduler/stop" } },
                 new { name = "account-session", endpoints = new[] { "POST /api/v1/accounts/connect", "POST /api/v1/accounts/{id}/disconnect" } },
                 new { name = "game-data", endpoints = new[] { "GET /api/v1/game-data/{category}?q={query}&limit={limit}" } },
                 new { name = "packet-diagnostics", endpoints = new[] { "POST /api/v1/accounts/{id}/packet-capture/start", "POST /api/v1/accounts/{id}/packet-capture/stop", "POST /api/v1/accounts/{id}/packet-capture/clear" } }
             },
-            note = "Observation and packet diagnostics are read-only. Navigation, dialogue and inventory actions are guarded wrappers around reviewed runtime operations; no guessed protocol requests are sent."
+            note = "Observation and packet diagnostics are read-only. Navigation, dialogue, inventory, exchange and HDV search actions are guarded wrappers around reviewed runtime operations; no guessed protocol requests are sent. HDV purchase is not exposed."
         }));
 
         app.MapPost("/api/v1/accounts/{id}/navigation/map", (string id, TravelToMapRequest request) =>
@@ -294,8 +295,30 @@ internal sealed class ControlApiHost : IAsyncDisposable
                 inventory = items,
                 dialogue = interfaceState.Dialogue,
                 exchange = interfaceState.Exchange,
+                bidHouse = interfaceState.BidHouse,
                 updatedAt = DateTimeOffset.UtcNow
             });
+        });
+
+        app.MapGet("/api/v1/accounts/{id}/hdv", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            return Results.Ok(client.DofusInterfaceState.Snapshot(client.CharacterId).BidHouse);
+        });
+
+        app.MapPost("/api/v1/accounts/{id}/hdv/search", (string id, BidHouseSearchRequest request) =>
+        {
+            if (request.Gid <= 0)
+                return Results.BadRequest(new { error = "Item GID must be positive." });
+
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            return client.SearchBidHouseItem(request.Gid, out var error)
+                ? Results.Accepted(value: new { accepted = true, accountId = id, gid = request.Gid, note = "Search requested; read results from GET /hdv." })
+                : Results.Conflict(new { accepted = false, error });
         });
 
         app.MapGet("/api/v1/accounts/{id}/map-cells", (string id) =>
@@ -686,5 +709,6 @@ internal sealed class ControlApiHost : IAsyncDisposable
     internal sealed record UseInventoryItemRequest(int Gid);
     internal sealed record NpcDialogueReplyRequest(int GroupIndex, int ReplyId);
     internal sealed record ExchangeOfferStackRequest(int ObjectUid);
+    internal sealed record BidHouseSearchRequest(int Gid);
     internal sealed record ScheduleStartRequest(string Profile);
 }
