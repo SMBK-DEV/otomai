@@ -202,6 +202,76 @@ public partial class GameInterfaceWindow : Window
         }
     }
 
+    private async void OfferExchangeStack_Click(object sender, RoutedEventArgs e)
+    {
+        if (_snapshot is not { Connected: true } || !_snapshot.Exchange.Active)
+        {
+            ExchangeHintText.Text = "Aucun échange actif ou compte non connecté.";
+            return;
+        }
+
+        if (!int.TryParse(ExchangeObjectUidText.Text.Trim(), out var objectUid) || objectUid <= 0)
+        {
+            ExchangeHintText.Text = "Saisissez un UID d'objet valide.";
+            return;
+        }
+
+        if (MessageBox.Show(
+                $"Offrir toute la pile correspondant à l'UID {objectUid} ? La quantité sera celle de l'inventaire live.",
+                "Confirmer l'offre",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            using var response = await _api.PostAsync(
+                $"api/v1/accounts/{Uri.EscapeDataString(_accountId)}/exchange/offer-stack",
+                new { objectUid });
+            var body = await response.Content.ReadAsStringAsync();
+            ExchangeHintText.Text = response.IsSuccessStatusCode
+                ? $"Offre envoyée pour l'UID {objectUid}. Attente de l'événement serveur."
+                : $"Offre refusée : {body}";
+            await RefreshDataAsync();
+        }
+        catch (Exception ex)
+        {
+            ExchangeHintText.Text = "Échec de l'offre : " + ex.Message;
+        }
+    }
+
+    private async void ConfirmExchangeReady_Click(object sender, RoutedEventArgs e)
+    {
+        if (_snapshot is not { Connected: true } || !_snapshot.Exchange.Active)
+        {
+            ExchangeHintText.Text = "Aucun échange actif ou compte non connecté.";
+            return;
+        }
+
+        if (MessageBox.Show(
+                "Confirmer l'état PRÊT pour l'offre actuellement observée ? Vérifiez les objets et quantités avant de continuer.",
+                "Confirmer l'échange",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            using var response = await _api.PostAsync(
+                $"api/v1/accounts/{Uri.EscapeDataString(_accountId)}/exchange/ready",
+                new { });
+            var body = await response.Content.ReadAsStringAsync();
+            ExchangeHintText.Text = response.IsSuccessStatusCode
+                ? "État PRÊT envoyé. Attendez la mise à jour du serveur."
+                : $"Validation refusée : {body}";
+            await RefreshDataAsync();
+        }
+        catch (Exception ex)
+        {
+            ExchangeHintText.Text = "Échec de la validation : " + ex.Message;
+        }
+    }
+
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await RefreshDataAsync();
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }
