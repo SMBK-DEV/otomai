@@ -519,10 +519,28 @@ public partial class OperationsCenterWindow : Window
     {
         var w = new AdminPanelWindow(_token) { Owner = this }; w.Show();
     }
-    private void OpenGameInterface_Click(object sender, RoutedEventArgs e)
+    private async void OpenGameInterface_Click(object sender, RoutedEventArgs e)
     {
-        var w = new GameInterfaceWindow(_token) { Owner = this };
-        w.Show();
+        try
+        {
+            var accounts = await _api.GetAsync<List<AccountStatus>>("api/v1/accounts") ?? [];
+            if (accounts.Count == 0)
+            {
+                StatusText.Text = "No live runtime account is available. Connect an account first.";
+                return;
+            }
+
+            var selected = RuntimeGrid.SelectedItem as AccountStatus;
+            var account = selected is not null && accounts.Any(x => x.Id == selected.Id)
+                ? accounts.First(x => x.Id == selected.Id)
+                : accounts[0];
+            var w = new GameInterfaceWindow(_token, account.Id) { Owner = this };
+            w.Show();
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Could not open the live game interface: " + ex.Message;
+        }
     }
 
     private async void OpenMap_Click(object sender, RoutedEventArgs e)
