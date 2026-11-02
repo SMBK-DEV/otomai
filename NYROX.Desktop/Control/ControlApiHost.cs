@@ -106,7 +106,7 @@ internal sealed class ControlApiHost : IAsyncDisposable
             groups = new[]
             {
                 new { name = "runtime", endpoints = new[] { "GET /api/v1/status", "GET /api/v1/accounts", "GET /api/v1/accounts/{id}/runtime", "GET /api/v1/logs" } },
-                new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "GET /api/v1/accounts/{id}/hdv", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
+                new { name = "game-observation", endpoints = new[] { "GET /api/v1/accounts/{id}/game-interface", "GET /api/v1/accounts/{id}/hdv", "GET /api/v1/accounts/{id}/fight", "GET /api/v1/accounts/{id}/map-cells", "GET /api/v1/accounts/{id}/quest-npc-events", "GET /api/v1/accounts/{id}/protocol-observer", "GET /api/v1/accounts/{id}/protocol-routing", "GET /api/v1/accounts/{id}/packet-capture", "GET /api/v1/accounts/{id}/packet-capture/{packetId}/decoded" } },
                 new { name = "navigation", endpoints = new[] { "POST /api/v1/accounts/{id}/navigation/map" } },
                 new { name = "dialogue-actions", endpoints = new[] { "POST /api/v1/accounts/{id}/dialogue/reply" } },
                 new { name = "exchange-actions", endpoints = new[] { "POST /api/v1/accounts/{id}/exchange/offer-stack", "POST /api/v1/accounts/{id}/exchange/ready" } },
@@ -118,7 +118,7 @@ internal sealed class ControlApiHost : IAsyncDisposable
                 new { name = "game-data", endpoints = new[] { "GET /api/v1/game-data/{category}?q={query}&limit={limit}" } },
                 new { name = "packet-diagnostics", endpoints = new[] { "POST /api/v1/accounts/{id}/packet-capture/start", "POST /api/v1/accounts/{id}/packet-capture/stop", "POST /api/v1/accounts/{id}/packet-capture/clear" } }
             },
-            note = "Observation and packet diagnostics are read-only. Navigation, dialogue, inventory, exchange and HDV search actions are guarded wrappers around reviewed runtime operations; no guessed protocol requests are sent. HDV purchase is not exposed."
+            note = "Observation, fight telemetry and packet diagnostics are read-only. Navigation, dialogue, inventory, exchange and HDV search actions are guarded wrappers around reviewed runtime operations; no guessed protocol requests are sent. HDV purchase is not exposed."
         }));
 
         app.MapPost("/api/v1/accounts/{id}/navigation/map", (string id, TravelToMapRequest request) =>
@@ -319,6 +319,63 @@ internal sealed class ControlApiHost : IAsyncDisposable
             return client.SearchBidHouseItem(request.Gid, out var error)
                 ? Results.Accepted(value: new { accepted = true, accountId = id, gid = request.Gid, note = "Search requested; read results from GET /hdv." })
                 : Results.Conflict(new { accepted = false, error });
+        });
+
+        app.MapGet("/api/v1/accounts/{id}/fight", (string id) =>
+        {
+            if (!BotManager.Instance.GetGameClients().TryGetValue(id, out var client))
+                return Results.NotFound(new { error = "Account is not present in the live runtime." });
+
+            var fight = client.FightInfo;
+            if (fight is null || !client.IsInFight)
+                return Results.Ok(new
+                {
+                    active = false,
+                    isPreparation = false,
+                    turn = 0,
+                    currentActorId = (long?)null,
+                    isMyTurnReady = false,
+                    fighters = Array.Empty<object>(),
+                    spells = Array.Empty<object>(),
+                    updatedAt = DateTimeOffset.UtcNow
+                });
+
+            var fighters = fight.ActorPositions.Values
+                .OrderBy(actor => actor.Team)
+                .ThenBy(actor => actor.CellId)
+                .Select(actor => new
+                {
+                    actorId = actor.Id,
+                    name = string.IsNullOrWhiteSpace(actor.Name) ? $"Combattant #{actor.Id}" : actor.Name,
+                    cellId = actor.CellId,
+                    team = actor.Team,
+                    breedId = actor.Breed,
+                    dead = actor.IsForcedDead,
+                    invisible = actor.IsInvisible
+                })
+                .ToArray();
+
+            var spells = client.Spells.Select(spell => new
+            {
+                id = spell.Id,
+                level = spell.SpellLevel.Grade,
+                available = spell.Available,
+                minRange = spell.GetMinRange(),
+                maxRange = spell.GetMaxRange(),
+                isWeapon = spell.IsWeapon
+            }).ToArray();
+
+            return Results.Ok(new
+            {
+                active = true,
+                isPreparation = fight.IsInPreparation,
+                turn = fight.Turn,
+                currentActorId = fight.FighterPlaying?.Id,
+                isMyTurnReady = fight.IsMyTurnReady,
+                fighters,
+                spells,
+                updatedAt = DateTimeOffset.UtcNow
+            });
         });
 
         app.MapGet("/api/v1/accounts/{id}/map-cells", (string id) =>
