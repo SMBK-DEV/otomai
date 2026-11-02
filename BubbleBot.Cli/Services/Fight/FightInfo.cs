@@ -95,9 +95,12 @@ public class FightInfo
         _executedSpells = 0;
         _illegalActions = 0;
         IsMyTurnReady = false;
-        _playTokenSource.Cancel();
+        // Publish the new turn token before cancelling the previous one.
+        // Its cancellation callback must not interpret a turn transition as a timeout.
+        var previousTokenSource = _playTokenSource;
         var tokenSource = new CancellationTokenSource();
         _playTokenSource = tokenSource;
+        previousTokenSource.Cancel();
         
         if(Client.AutoPass)
         {
@@ -111,7 +114,11 @@ public class FightInfo
             var turnNumber = Turn;
             tokenSource.Token.Register(() =>
             {
-                if (turnNumber == Turn && FighterPlaying == Client.Fighter && !IsEnded && Client.IsInFight)
+                if (ReferenceEquals(_playTokenSource, tokenSource) &&
+                    turnNumber == Turn &&
+                    FighterPlaying == Client.Fighter &&
+                    !IsEnded &&
+                    Client.IsInFight)
                 {
                     PassTurn(true);
                 }
@@ -180,10 +187,15 @@ public class FightInfo
 
     public void OnFightEndEvent(FightEndEvent fightEndEvent)
     {
+        StopPendingActions();
+    }
+
+    public void StopPendingActions()
+    {
         IsEnded = true;
 
-        // Stop any delayed AI step from sending actions after the server ends the fight.
-        // The cancellation callback is guarded by IsEnded/Client.IsInFight above.
+        // Stop delayed AI work when the server ends or destroys the fight context.
+        // The timeout callback also verifies that its token is still the active turn.
         _playTokenSource.Cancel();
     }
 
