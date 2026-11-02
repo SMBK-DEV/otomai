@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Net.Http;
 using System.Text.Json;
+using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Controls;
 using BubbleBot.Cli.Services;
@@ -319,8 +320,8 @@ public partial class OperationsCenterWindow : Window
 
     private void ImportLegacySubscribeCache_Click(object sender, RoutedEventArgs e)
     {
-        // Read-only bridge: the legacy cache contains login + expiry only. Never import
-        // credentials, cookies, WAF tokens, payment PINs, or execute the legacy runner.
+        // The legacy runner writes subscribeCache.json to its current working directory.
+        // Search common locations first; Browse below supports any other existing location.
         var candidates = new[]
         {
             Path.Combine(AppContext.BaseDirectory, "subscribeCache.json"),
@@ -330,16 +331,37 @@ public partial class OperationsCenterWindow : Window
         var cachePath = candidates.FirstOrDefault(File.Exists);
         if (cachePath is null)
         {
-            StatusText.Text = "subscribeCache.json not found. Place the existing legacy cache beside NYROX or in %LocalAppData%\\NYROX, then import again.";
+            StatusText.Text = "Legacy cache not found in common locations. Use Browse legacy cache to select the existing subscribeCache.json.";
             return;
         }
 
+        ImportLegacySubscribeCache(cachePath);
+    }
+
+    private void BrowseLegacySubscribeCache_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Select the existing OtomAI / BubbleBot Subscribe cache",
+            Filter = "Subscribe cache (subscribeCache.json)|subscribeCache.json|JSON files (*.json)|*.json|All files (*.*)|*.*",
+            CheckFileExists = true,
+            Multiselect = false
+        };
+        if (dialog.ShowDialog(this) == true)
+            ImportLegacySubscribeCache(dialog.FileName);
+    }
+
+    private void ImportLegacySubscribeCache(string cachePath)
+    {
+        // Read-only bridge: the legacy cache contains login + expiry only. Never import
+        // credentials, cookies, WAF tokens, payment PINs, or execute the legacy runner.
         try
         {
             var entries = JsonSerializer.Deserialize<List<LegacySubscribeCacheEntry>>(
                 File.ReadAllText(cachePath),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
-            var imported = 0;
+            var added = 0;
+            var updated = 0;
             foreach (var cached in entries.Where(x => !string.IsNullOrWhiteSpace(x.Login)))
             {
                 var existing = _subscriptions.FirstOrDefault(x =>
@@ -358,17 +380,18 @@ public partial class OperationsCenterWindow : Window
                 if (existing is null)
                 {
                     _subscriptions.Add(entry);
-                    imported++;
+                    added++;
                 }
                 else
                 {
                     var index = _subscriptions.IndexOf(existing);
                     _subscriptions[index] = entry;
+                    updated++;
                 }
             }
 
             SaveWorkspace();
-            StatusText.Text = $"Imported/updated {imported} legacy cache record(s) from {Path.GetFileName(cachePath)}. Expiry data is historical and was not verified with Ankama.";
+            StatusText.Text = $"Legacy cache import complete: {added} added, {updated} updated from {Path.GetFileName(cachePath)}. Expiry is historical and was not verified with Ankama.";
         }
         catch (Exception ex)
         {
