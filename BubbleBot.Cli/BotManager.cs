@@ -79,26 +79,25 @@ public class BotManager : Singleton<BotManager>
         var proxyUsername = string.Empty;
         var proxyPassword = string.Empty;
         
-        if (!string.IsNullOrEmpty(account.Proxy))
+        if (!string.IsNullOrWhiteSpace(account.Proxy))
         {
-            var proxyIpPort = account.Proxy.Split("://")[1].Split("@")[0];
-            var proxyUserPw = account.Proxy.Split("://")[1].Split("@")[1];
-
-            proxyIp = proxyIpPort.Split(":")[0];
-            proxyPort = int.Parse(proxyIpPort.Split(":")[1]);
-            
-            // maybe there is no user and password
-            if (proxyUserPw.Contains(':'))
+            if (!TryParseSocks5Proxy(account.Proxy, out proxyIp, out proxyPort, out proxyUsername, out proxyPassword))
             {
-                proxyUsername = proxyUserPw.Split(":")[0];
-                proxyPassword = proxyUserPw.Split(":")[1];
+                Log.Logger.Error("Invalid or unsupported SOCKS5 proxy configured for account {id}. Expected socks5://host:port, socks5://host:port@user:password, or socks5://user:password@host:port.", username);
+                return;
             }
-            
-            // if proxy is a domain we need to resolve it, we count the number of . to know
-            // if it's a domain or an ip
-            if (proxyIp.Count(x => x == '.') < 3)
+
+            if (!IPAddress.TryParse(proxyIp, out _))
             {
-                proxyIp = GetIpFromHost(proxyIp);
+                try
+                {
+                    proxyIp = GetIpFromHost(proxyIp);
+                }
+                catch (Exception exception)
+                {
+                    Log.Logger.Error(exception, "Could not resolve proxy host {ProxyHost} for account {id}", proxyIp, username);
+                    return;
+                }
             }
         }
 
@@ -160,6 +159,84 @@ public class BotManager : Singleton<BotManager>
         
         botClient.ConnectAsync();
         Clients[username] = botClient;
+    }
+
+    private static bool TryParseSocks5Proxy(
+        string value,
+        out string host,
+        out int port,
+        out string username,
+        out string password)
+    {
+        host = string.Empty;
+        port = 0;
+        username = string.Empty;
+        password = string.Empty;
+
+        var separator = value.IndexOf("://", StringComparison.Ordinal);
+        if (separator <= 0 ||
+            !value[..separator].Equals("socks5", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var authority = value[(separator + 3)..].Trim();
+        if (authority.Length == 0 || authority.Contains('/') || authority.Contains('?') || authority.Contains('#'))
+            return false;
+
+        string endpoint;
+        string credentials = string.Empty;
+        var at = authority.LastIndexOf('@');
+        if (at >= 0)
+        {
+            var left = authority[..at];
+            var right = authority[(at + 1)..];
+
+            // Older BubbleBot format: host:port@username:password.
+            if (TryReadProxyEndpoint(left, out _, out _))
+            {
+                endpoint = left;
+                credentials = right;
+            }
+            // Standard URI format: username:password@host:port.
+            else
+            {
+                endpoint = right;
+                credentials = left;
+            }
+        }
+        else
+        {
+            endpoint = authority;
+        }
+
+        if (!TryReadProxyEndpoint(endpoint, out host, out port))
+            return false;
+
+        if (credentials.Length > 0)
+        {
+            var separatorIndex = credentials.IndexOf(':');
+            if (separatorIndex < 0)
+                username = Uri.UnescapeDataString(credentials);
+            else
+            {
+                username = Uri.UnescapeDataString(credentials[..separatorIndex]);
+                password = Uri.UnescapeDataString(credentials[(separatorIndex + 1)..]);
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryReadProxyEndpoint(string endpoint, out string host, out int port)
+    {
+        host = string.Empty;
+        port = 0;
+        if (!Uri.TryCreate("socks5://" + endpoint, UriKind.Absolute, out var uri) ||
+            string.IsNullOrWhiteSpace(uri.Host) || uri.Port is < 1 or > 65535)
+            return false;
+
+        host = uri.Host;
+        port = uri.Port;
+        return true;
     }
 
     public void AddGameBotClient(BotGameClient client)
