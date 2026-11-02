@@ -87,7 +87,7 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                     <TextBlock x:Name="DialogueHintText"
-                                               Text="Les réponses sont affichées en lecture seule tant que le mapping exact du paquet de réponse n'est pas validé."
+                                               Text="Les réponses actives peuvent être envoyées manuellement après confirmation. Le runtime vérifie le dernier dialogue observé."
                                                Foreground="#E6B96A" FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                 </StackPanel>
                             </Border>
