@@ -181,7 +181,7 @@
                     </Border>
                     <Border Grid.Row="1" Style="{StaticResource PanelFrame}" Margin="0,0,0,8">
                         <DockPanel>
-                            <TextBlock DockPanel.Dock="Top" Text="COMBATTANTS & POSITIONS" Foreground="#D9B36C" FontWeight="Bold" Margin="0,0,0,7"/>
+                            <TextBlock DockPanel.Dock="Top" Text="COMBATTANTS &amp; POSITIONS" Foreground="#D9B36C" FontWeight="Bold" Margin="0,0,0,7"/>
                             <ListView x:Name="FightActorsList" Background="#111923" Foreground="#E8EAF0" BorderBrush="#536477">
                                 <ListView.View>
                                     <GridView>
