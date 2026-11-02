@@ -164,6 +164,46 @@
                 </Grid>
             </TabItem>
 
+            <TabItem Header="HDV">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Style="{StaticResource PanelFrame}" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock Text="HÔTEL DE VENTE • RECHERCHE" Foreground="#D9B36C" FontWeight="Bold"/>
+                            <TextBlock x:Name="HdvStateText" Text="En attente de l'ouverture de l'HDV dans le jeu."
+                                       Foreground="#A8B4C2" FontSize="11" Margin="0,5,0,8"/>
+                            <DockPanel>
+                                <Button Style="{StaticResource GameButton}" Content="Rechercher GID" Click="SearchHdv_Click" DockPanel.Dock="Right"/>
+                                <TextBox x:Name="HdvGidText" ToolTip="GID du modèle d'objet" VerticalContentAlignment="Center" Padding="7,5"/>
+                            </DockPanel>
+                            <TextBlock x:Name="HdvHintText" Text="Recherche en lecture seule. Aucun achat ne sera envoyé."
+                                       Foreground="#E6B96A" FontSize="10" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="1" Style="{StaticResource PanelFrame}" Margin="0,0,0,10">
+                        <TextBlock Text="Les résultats affichés proviennent des événements reçus du serveur. Les prix sont présentés tels quels."
+                                   Foreground="#A8B4C2" FontSize="10" TextWrapping="Wrap"/>
+                    </Border>
+                    <Border Grid.Row="2" Style="{StaticResource PanelFrame}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="RÉSULTATS OBSERVÉS" Foreground="#D9B36C" FontWeight="Bold" Margin="0,0,0,8"/>
+                            <ListView x:Name="HdvResultsList" Background="#111923" Foreground="#E8EAF0" BorderBrush="#536477">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="Offre" DisplayMemberBinding="{Binding Label}" Width="150"/>
+                                        <GridViewColumn Header="Prix enregistrés (kamas)" DisplayMemberBinding="{Binding Prices}" Width="300"/>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
             <TabItem Header="Échange">
                 <Grid Margin="12">
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
