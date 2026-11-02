@@ -16,6 +16,8 @@ internal sealed record MapCellSnapshot(
     bool WalkableDuringFight, bool FarmCell, int Floor, int MapChangeData, int Arrow,
     bool Interactive, int[] InteractiveElementIds, string[] InteractiveElementDetails, bool Occupied)
 {
+    public int? FighterTeam { get; init; }
+    public string? FighterName { get; init; }
     private static int _currentCell = -1;
     internal static void SetCurrentCell(int cellId) => _currentCell = cellId;
 
@@ -23,6 +25,8 @@ internal sealed record MapCellSnapshot(
     public double CanvasY => (X + Y + 19) * 9d;
 
     public Brush Brush => Id == _currentCell ? new SolidColorBrush(ParseColor("#F4C542"))
+        : FighterTeam == 0 ? new SolidColorBrush(ParseColor("#2563EB"))
+        : FighterTeam.HasValue ? new SolidColorBrush(ParseColor("#DC2626"))
         : Occupied ? new SolidColorBrush(ParseColor("#7E22CE"))
         : Interactive ? new SolidColorBrush(ParseColor("#0369A1"))
         : Arrow != 0 ? new SolidColorBrush(ParseColor("#BE185D"))
@@ -31,7 +35,8 @@ internal sealed record MapCellSnapshot(
         : new SolidColorBrush(ParseColor("#334155"));
 
     public string Tooltip =>
-        $"Cell {Id} • ({X},{Y}) • {(Walkable ? "walkable" : "blocked")} • LOS {(LineOfSight ? "yes" : "no")} • floor {Floor} • arrow {Arrow}";
+        $"Cell {Id} • ({X},{Y}) • {(Walkable ? "walkable" : "blocked")} • LOS {(LineOfSight ? "yes" : "no")} • floor {Floor} • arrow {Arrow}" +
+        (FighterName is null ? string.Empty : $" • {FighterName} (team {FighterTeam})");
 
     private static Color ParseColor(string value) => (Color)ColorConverter.ConvertFromString(value);
 }
@@ -40,14 +45,17 @@ public partial class MapCellsWindow : Window
 {
     private readonly ControlApiClient _api;
     private readonly string _accountId;
+    private readonly System.Windows.Threading.DispatcherTimer _timer;
 
     public MapCellsWindow(string token, string accountId)
     {
         InitializeComponent();
         _accountId = accountId;
         _api = new ControlApiClient(token);
-        Closed += (_, _) => _api.Dispose();
-        Loaded += async (_, _) => await RefreshDataAsync();
+        _timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _timer.Tick += async (_, _) => await RefreshDataAsync();
+        Closed += (_, _) => { _timer.Stop(); _api.Dispose(); };
+        Loaded += async (_, _) => { await RefreshDataAsync(); _timer.Start(); };
     }
 
     private async Task RefreshDataAsync()
@@ -63,8 +71,19 @@ public partial class MapCellsWindow : Window
             }
 
             MapCellSnapshot.SetCurrentCell(snapshot.CurrentCell);
-            CellsGrid.ItemsSource = new ObservableCollection<MapCellSnapshot>(
-                snapshot.Cells.OrderBy(cell => cell.Id));
+            var fight = await _api.GetAsync<GameFightSnapshot>(
+                $"api/v1/accounts/{Uri.EscapeDataString(_accountId)}/fight");
+            var fightersByCell = fight is { Active: true }
+                ? fight.Fighters.Where(actor => !actor.Dead && actor.CellId >= 0)
+                    .GroupBy(actor => actor.CellId)
+                    .ToDictionary(group => group.Key, group => group.First())
+                : new Dictionary<int, GameFightActorDto>();
+            var cells = snapshot.Cells.Select(cell =>
+            {
+                if (!fightersByCell.TryGetValue(cell.Id, out var actor)) return cell;
+                return cell with { FighterTeam = actor.Team, FighterName = actor.Name };
+            }).OrderBy(cell => cell.Id);
+            CellsGrid.ItemsSource = new ObservableCollection<MapCellSnapshot>(cells);
 
             MapInfoText.Text =
                 $"Account {_accountId} • Map {snapshot.MapId} • ({snapshot.PosX},{snapshot.PosY}) • Cell {snapshot.CurrentCell}" +
@@ -72,7 +91,7 @@ public partial class MapCellsWindow : Window
                 $"\nWorld-graph transitions: {(snapshot.Transitions.Length == 0 ? "none detected" : string.Join(", ", snapshot.Transitions))}" +
                 (snapshot.InFight ? " • IN FIGHT" : "");
 
-            CellDetailsText.Text = $"Loaded {snapshot.Cells.Count} cells. Select a cell to inspect it.";
+            CellDetailsText.Text = $"Loaded {snapshot.Cells.Count} cells • {(fightersByCell.Count > 0 ? $"{fightersByCell.Count} fighter position(s) overlaid" : "no active fight overlay")}. Select a cell to inspect it.";
         }
         catch (Exception ex)
         {
