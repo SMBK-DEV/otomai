@@ -249,6 +249,39 @@ public partial class OperationsCenterWindow : Window
         }
     }
 
+    private void ClearProxyFromAccount_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProxiesGrid.SelectedItem is not ProxyProfile profile ||
+            string.IsNullOrWhiteSpace(profile.AssignedAccount))
+        {
+            StatusText.Text = "Select a SOCKS5 profile with an assigned account.";
+            return;
+        }
+
+        try
+        {
+            AccountService.Instance.LoadAccounts();
+            var account = AccountService.Instance.GetAccount(profile.AssignedAccount);
+            if (account is null)
+            {
+                StatusText.Text = "Assigned account was not found in the Zaap/BubbleBot account store.";
+                return;
+            }
+
+            account.Proxy = null;
+            AccountService.Instance.SaveSaharachAccounts();
+            var index = _proxies.IndexOf(profile);
+            if (index >= 0)
+                _proxies[index] = profile with { State = $"Proxy cleared from {profile.AssignedAccount} — next connection" };
+            SaveWorkspace();
+            StatusText.Text = $"Proxy cleared from {profile.AssignedAccount}. Existing live sessions were not changed.";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Could not clear account proxy: " + ex.Message;
+        }
+    }
+
     private void RemoveProxy_Click(object sender, RoutedEventArgs e)
     {
         if (ProxiesGrid.SelectedItem is ProxyProfile x) _proxies.Remove(x);
@@ -263,7 +296,29 @@ public partial class OperationsCenterWindow : Window
             SubReferenceBox.Text.Trim(), SubExpiryBox.Text.Trim(), "Pending / reminder only"));
         SubReferenceBox.Clear(); SaveWorkspace(); StatusText.Text = "Subscription record saved. No payment or Ogrine purchase was made.";
     }
-    private void RemoveSubscription_Click(object sender, RoutedEventArgs e) { if (SubscriptionsGrid.SelectedItem is SubscriptionEntry x) _subscriptions.Remove(x); SaveWorkspace(); }
+    private void ConfirmSubscriptionExternally_Click(object sender, RoutedEventArgs e)
+    {
+        if (SubscriptionsGrid.SelectedItem is not SubscriptionEntry entry)
+        {
+            StatusText.Text = "Select a subscription or Ogrines record first.";
+            return;
+        }
+
+        var index = _subscriptions.IndexOf(entry);
+        if (index < 0) return;
+        var state = entry.Provider.Equals("Ogrines", StringComparison.OrdinalIgnoreCase)
+            ? "Ogrines credit manually confirmed by user — not verified with Ankama"
+            : "External payment manually confirmed by user — not verified with provider";
+        _subscriptions[index] = entry with { State = state };
+        SaveWorkspace();
+        StatusText.Text = "Record updated as manually confirmed. NYROX did not process or verify a payment.";
+    }
+
+    private void RemoveSubscription_Click(object sender, RoutedEventArgs e)
+    {
+        if (SubscriptionsGrid.SelectedItem is SubscriptionEntry x) _subscriptions.Remove(x);
+        SaveWorkspace();
+    }
 
     private void AddCharacter_Click(object sender, RoutedEventArgs e)
     {
