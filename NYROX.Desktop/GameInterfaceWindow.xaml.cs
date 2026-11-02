@@ -16,6 +16,12 @@ internal sealed record GameExchangeDto(bool Active, long? PartnerCharacterId, Li
     List<GameExchangeReadyDto> Ready, DateTimeOffset UpdatedAt);
 internal sealed record GameBidHouseItemDto(long Uid, List<long> Prices);
 internal sealed record GameBidHouseDto(bool Open, int? ObjectGid, List<GameBidHouseItemDto> Items, DateTimeOffset UpdatedAt);
+internal sealed record GameFightActorDto(long ActorId, string Name, int CellId, int Team, int BreedId, bool Dead, bool Invisible);
+internal sealed record GameFightSpellDto(int Id, int Level, bool Available, int MinRange, int MaxRange, bool IsWeapon);
+internal sealed record GameFightSnapshot(bool Active, bool IsPreparation, int Turn, long? CurrentActorId,
+    bool IsMyTurnReady, List<GameFightActorDto> Fighters, List<GameFightSpellDto> Spells, DateTimeOffset UpdatedAt);
+internal sealed record FightActorView(string Name, string Details);
+internal sealed record FightSpellView(string Name, string Details);
 internal sealed record GameInterfaceSnapshot(string AccountId, string Character, bool Connected, long CharacterId,
     long Kamas, int InventoryCount, List<GameInterfaceItemDto> Inventory, GameDialogueDto? Dialogue,
     GameExchangeDto Exchange, GameBidHouseDto BidHouse, DateTimeOffset UpdatedAt);
@@ -74,6 +80,9 @@ public partial class GameInterfaceWindow : Window
             RenderInventory(data.Inventory);
             RenderExchange(data.Exchange, data.Inventory);
             RenderBidHouse(data.BidHouse);
+            var fight = await _api.GetAsync<GameFightSnapshot>(
+                $"api/v1/accounts/{Uri.EscapeDataString(_accountId)}/fight");
+            if (fight is not null) RenderFight(fight);
             StatusText.Text = $"Données actualisées à {data.UpdatedAt.ToLocalTime():T} • rafraîchissement automatique toutes les 2 secondes";
         }
         catch (Exception ex)
@@ -154,6 +163,24 @@ public partial class GameInterfaceWindow : Window
             ExchangeHintText.Text = "L'interface est prête. Quand un échange démarre, les objets observés et les états Ready seront affichés ici.";
         else
             ExchangeHintText.Text = "Les événements serveur fournissent l'offre et l'état Ready. Vous pouvez offrir une pile complète et confirmer manuellement après vérification.";
+    }
+
+    private void RenderFight(GameFightSnapshot fight)
+    {
+        FightSummaryText.Text = !fight.Active
+            ? "Aucun combat actif"
+            : fight.IsPreparation
+                ? "Phase de placement"
+                : $"Tour {fight.Turn} • combattant actif : {(fight.CurrentActorId?.ToString() ?? "—")} • prêt : {(fight.IsMyTurnReady ? "oui" : "non")}";
+        FightActorsList.ItemsSource = fight.Fighters.Select(actor => new FightActorView(
+            actor.Name,
+            $"Équipe {actor.Team} • cellule {actor.CellId} • breed {actor.BreedId}" +
+            (actor.Dead ? " • mort" : "") + (actor.Invisible ? " • invisible" : ""))).ToList();
+        FightSpellsList.ItemsSource = fight.Spells.Select(spell => new FightSpellView(
+            $"Sort #{spell.Id} • niveau {spell.Level}",
+            $"{(spell.Available ? "Disponible" : "Indisponible")} • portée {spell.MinRange}–{spell.MaxRange}" +
+            (spell.IsWeapon ? " • arme" : ""))).ToList();
+        FightHintText.Text = "Télémétrie en lecture seule : combattants, positions et sorts disponibles. Aucun déplacement, lancement de sort ou passage de tour n'est envoyé depuis cette fenêtre.";
     }
 
     private void RenderBidHouse(GameBidHouseDto bidHouse)
