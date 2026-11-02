@@ -171,6 +171,76 @@ public partial class AdminPanelWindow : Window
         catch (Exception ex) { StatusText.Text = ex.Message; }
     }
 
+    private async void EquipInventoryItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedAccount is not { } account)
+        {
+            StatusText.Text = "Select an account first.";
+            return;
+        }
+
+        if (!int.TryParse(InventoryObjectUidText.Text.Trim(), out var objectUid) || objectUid <= 0)
+        {
+            StatusText.Text = "Enter a valid positive inventory object UID.";
+            return;
+        }
+
+        if (MessageBox.Show(
+                $"Try to equip inventory object UID {objectUid} for {account.Character}? Existing equipment slots will not be replaced.",
+                "Confirm equip item",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            using var response = await _api.PostAsync(
+                $"api/v1/accounts/{Uri.EscapeDataString(account.Id)}/inventory/equip",
+                new { objectUid });
+            var body = await response.Content.ReadAsStringAsync();
+            StatusText.Text = response.IsSuccessStatusCode
+                ? $"Equip request accepted for object UID {objectUid}."
+                : $"Equip rejected: {body}";
+            await RefreshSelectedRuntimeAsync();
+        }
+        catch (Exception ex) { StatusText.Text = "Equip request failed: " + ex.Message; }
+    }
+
+    private async void UseInventoryItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedAccount is not { } account)
+        {
+            StatusText.Text = "Select an account first.";
+            return;
+        }
+
+        if (!int.TryParse(InventoryItemGidText.Text.Trim(), out var gid) || gid <= 0)
+        {
+            StatusText.Text = "Enter a valid positive item GID.";
+            return;
+        }
+
+        if (MessageBox.Show(
+                $"Use one usable item with GID {gid} for {account.Character}?",
+                "Confirm use item",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            using var response = await _api.PostAsync(
+                $"api/v1/accounts/{Uri.EscapeDataString(account.Id)}/inventory/use",
+                new { gid });
+            var body = await response.Content.ReadAsStringAsync();
+            StatusText.Text = response.IsSuccessStatusCode
+                ? $"Use-item request accepted for GID {gid}."
+                : $"Use-item rejected: {body}";
+            await RefreshSelectedRuntimeAsync();
+        }
+        catch (Exception ex) { StatusText.Text = "Use-item request failed: " + ex.Message; }
+    }
+
     private async void NavigateToMap_Click(object sender, RoutedEventArgs e)
     {
         if (SelectedAccount is not { } account)
