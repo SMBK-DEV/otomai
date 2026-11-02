@@ -51,6 +51,7 @@ public partial class OperationsCenterWindow : Window
         SubscriptionsGrid.ItemsSource = _subscriptions;
         CharactersGrid.ItemsSource = _characters;
         RuntimeGrid.ItemsSource = new ObservableCollection<AccountStatus>();
+        LiveCharactersGrid.ItemsSource = new ObservableCollection<AccountStatus>();
         LoadWorkspace();
         UpdateSummary();
         Loaded += async (_, _) => await RefreshRuntimeAsync();
@@ -509,6 +510,28 @@ public partial class OperationsCenterWindow : Window
         catch (Exception ex) { StatusText.Text = "Runtime API unavailable: " + ex.Message; }
     }
     private async void RefreshRuntime_Click(object sender, RoutedEventArgs e) => await RefreshRuntimeAsync();
+
+    private async void RefreshLiveCharacters_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            LiveCharactersStatus.Text = "Reading connected runtime sessions…";
+            var accounts = await _api.GetAsync<List<AccountStatus>>("api/v1/accounts") ?? [];
+            var live = accounts
+                .Where(x => !string.IsNullOrWhiteSpace(x.Character))
+                .OrderBy(x => x.Character, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            LiveCharactersGrid.ItemsSource = live;
+            LiveCharactersStatus.Text = live.Count == 0
+                ? $"No character names are currently exposed by the runtime ({accounts.Count} account session(s) checked). Connect a character and refresh."
+                : $"{live.Count} live character(s) from {accounts.Count} runtime account session(s). This is session data, not the saved planning list.";
+        }
+        catch (Exception ex)
+        {
+            LiveCharactersStatus.Text = "Live character refresh failed: " + ex.Message;
+        }
+    }
+
     private void OpenController_Click(object sender, RoutedEventArgs e)
     {
         var w = new ControllerWindow(_token) { Owner = this };
